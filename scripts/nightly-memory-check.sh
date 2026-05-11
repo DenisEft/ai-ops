@@ -31,6 +31,22 @@ if [ "$LAST_WRITTEN" != "$DATE" ]; then
 - [ ] Обновить memory/state.json
 EOF
   fi
-  # Log the issue
-  echo "$(date -u '+%Y-%m-%d %H:%M:%S') — daily file for $DATE was missed (state says: $LAST_WRITTEN)" >> "$MEMORY_DIR/nightly-check.log"
+  # Log the issue (rotate log if > 100 lines)
+  LOG="$MEMORY_DIR/nightly-check.log"
+  echo "$(date -u '+%Y-%m-%d %H:%M:%S') — daily file for $DATE was missed (state says: $LAST_WRITTEN)" >> "$LOG"
+  if [ -f "$LOG" ]; then
+    LINES=$(wc -l < "$LOG")
+    if [ "$LINES" -gt 100 ]; then
+      tail -50 "$LOG" > "${LOG}.tmp" && mv "${LOG}.tmp" "$LOG"
+    fi
+  fi
+
+  # Update state to today (so it doesn't trigger again tomorrow)
+  python3 -c "
+import json
+with open('$STATE_FILE') as f: s = json.load(f)
+s['lastDailyWritten'] = '$DATE'
+with open('$STATE_FILE', 'w') as f: json.dump(s, f, indent=2); f.write('\\n')
+print('state updated to $DATE')
+" 2>/dev/null
 fi

@@ -83,21 +83,18 @@ Capture what matters. Decisions, context, things to remember. Skip the secrets u
 
 ### 🛡 Memory State Guard (железная гарантия)
 
-**`memory/state.json`** — единственный источник правды о том, записан ли день:
+**`memory/state.json`** — три поля:
+- `lastDailyWritten` — дата последнего daily-файла (YYYY-MM-DD)
+- `lastMemoryMaintenance` — дата последней чистки MEMORY.md
+- `lastCommit` — хеш последнего коммита
 
-```json
-{
-  "lastDailyWritten": "2026-05-11",
-  "lastMemoryMaintenance": "2026-05-11",
-  "lastCommit": "2026-05-11"
-}
-```
+Пример: `{"lastDailyWritten":"2026-05-11","lastMemoryMaintenance":"2026-05-11","lastCommit":"49238f0"}`
 
 **Правила:**
-1. **При запуске сессии** — читай `memory/state.json`. Если `lastDailyWritten != сегодня` → создай daily-файл и запиши начальную строку
-2. **При каждом действии** — добавляй минимум одну строку в daily-файл (коротко, 1-2 слова)
-3. **Перед закрытием сессии** — обновляй `state.json` + `git add memory/ && git commit -m "memory: daily log"`
-4. **Heartbeat** — проверяет `state.json`. Если `lastDailyWritten != сегодня` → дописать итог, обновить state, закоммитить
+1. **При запуске сессии** — читай `state.json`. Если `lastDailyWritten != сегодня` → создай daily-файл и запиши начальную строку
+2. **При каждом взаимодействии с пользователем** — добавляй одну строку в daily (1-2 слова). Пустой день = уже действие.
+3. **Перед закрытием сессии** — обнови `state.json` → `git add memory/ && git commit` **только если есть изменения**
+4. **Heartbeat** — проверяет `state.json`. Если `lastDailyWritten != сегодня` → дописать, обновить, закоммитить
 
 **Git commit — финальный маркер.** Если commit прошёл — день записан намертво.
 
