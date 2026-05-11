@@ -1,0 +1,8 @@
+node_modules/
+.clawhub/
+.learnings/
+.farpost*
+llama-panel/frontend/dist/
+llama-panel/backend/metrics-config.json
+*.log
+.env
