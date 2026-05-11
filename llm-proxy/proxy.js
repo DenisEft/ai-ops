@@ -14,6 +14,11 @@ if (!TOKEN) {
 }
 
 const MAX_SYSTEM_PROMPT = 4000;
+const LOG = '/tmp/amvera-proxy.log';
+const fs = require('fs');
+function log(...args) {
+  fs.appendFileSync(LOG, `[${new Date().toISOString()}] ${args.join(' ')}\n`);
+}
 
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, `http://localhost:${PORT}`);
@@ -37,6 +42,7 @@ const server = http.createServer(async (req, res) => {
     try {
       openaiReq = JSON.parse(body);
     } catch (e) {
+      log('PARSE ERROR:', e.message, 'body length:', body.length);
       res.writeHead(400, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: { message: 'Invalid JSON', type: 'invalid_request_error' } }));
       return;
@@ -58,11 +64,16 @@ const server = http.createServer(async (req, res) => {
       return m;
     });
 
+    // Add reasoning for GPT-5
+    // Default higher max_tokens for GPT-5 (needs more for reasoning)
+    let maxTok = openaiReq.max_completion_tokens || openaiReq.max_tokens;
+    if (!maxTok || maxTok < 200) maxTok = 4096;
+
     const amveraBody = {
       model: openaiReq.model || 'gpt-5',
       messages,
       temperature: openaiReq.temperature,
-      max_completion_tokens: openaiReq.max_completion_tokens || openaiReq.max_tokens,
+      max_completion_tokens: maxTok,
       top_p: openaiReq.top_p,
       stop: openaiReq.stop,
       frequency_penalty: openaiReq.frequency_penalty,
@@ -77,12 +88,14 @@ const server = http.createServer(async (req, res) => {
 
     const data = JSON.stringify(amveraBody);
     const postData = Buffer.from(data);
+    log('FORWARDING model=' + amveraBody.model + ' msgs=' + messages.length + ' bodyLen=' + data.length);
 
     const options = {
       hostname: 'kong-proxy.yc.amvera.ru',
       path: '/api/v1/models/gpt',
       method: 'POST',
       port: 443,
+      rejectUnauthorized: false,
       headers: {
         'X-Auth-Token': 'Bearer ' + TOKEN,
         'Content-Type': 'application/json',
@@ -106,6 +119,21 @@ const server = http.createServer(async (req, res) => {
         proxyRes.on('data', chunk => proxyBody += chunk);
         proxyRes.on('end', () => {
           try {
+            log('AMVERA RESPONSE status=' + proxyRes.statusCode + ' bodyLen=' + proxyBody.length + ' preview=' + proxyBody.substring(0, 100));
+
+            // Handle non-JSON responses (502, 503, etc.)
+            if (proxyRes.statusCode >= 500 && !proxyBody.startsWith('{')) {
+              log('AMVERA ERROR: non-JSON response, status=' + proxyRes.statusCode);
+              res.writeHead(502, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({
+                error: {
+                  message: `Amvera service error (HTTP ${proxyRes.statusCode}): ${proxyBody.substring(0, 300)}`,
+                  type: 'server_error'
+                }
+              }));
+              return;
+            }
+
             const resp = JSON.parse(proxyBody);
 
             if (resp.choices && resp.choices.length > 0) {
@@ -122,6 +150,8 @@ const server = http.createServer(async (req, res) => {
                     refusal: c.message?.refusal || null,
                   },
                   finish_reason: c.finish_reason || 'stop',
+                    // Handle reasoning content
+                    reasoning: c.message?.reasoning || null,
                   logprobs: c.logprobs || null,
                 })),
                 usage: resp.usage ? {
@@ -184,16 +214,19 @@ const server = http.createServer(async (req, res) => {
     });
 
     proxyReq.on('error', err => {
+      log('PROXY ERROR:', err.message);
       res.writeHead(502, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: { message: `Proxy error: ${err.message}`, type: 'server_error' } }));
     });
 
     proxyReq.on('timeout', () => {
+      log('PROXY TIMEOUT');
       proxyReq.destroy();
       res.writeHead(504, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: { message: 'Gateway timeout', type: 'server_error' } }));
     });
 
+    log('SENDING POST to Amvera, body:', data.substring(0, 200));
     proxyReq.write(postData);
     proxyReq.end();
   } else {
