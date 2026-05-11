@@ -1,0 +1,19 @@
+[Unit]
+Description=Llama Panel — Web Management for llama.cpp
+After=network.target llama-8080.service
+
+[Service]
+Type=simple
+User=den
+WorkingDirectory=/home/den/.openclaw/workspace/llama-panel/backend
+ExecStart=/usr/bin/node src/index.js
+Environment=PORT=8081
+Environment=LLAMA_URL=http://127.0.0.1:8080
+Environment=SERVICE_NAME=llama-8080.service
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

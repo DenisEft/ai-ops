@@ -1,0 +1,184 @@
+{
+  "version": "1.0",
+  "updatedAt": "2026-05-09T16:32:36.101Z",
+  "metrics": [
+    {
+      "id": "cpu",
+      "name": "CPU Usage",
+      "nameRu": "Загрузка CPU",
+      "type": "gauge",
+      "enabled": true,
+      "unit": "%",
+      "max": 100,
+      "color": "#3b82f6",
+      "collect": {
+        "method": "procstat",
+        "interval": 5000
+      }
+    },
+    {
+      "id": "memory",
+      "name": "Memory Usage",
+      "nameRu": "Использование памяти",
+      "type": "gauge",
+      "enabled": true,
+      "unit": "%",
+      "max": 100,
+      "color": "#10b981",
+      "collect": {
+        "method": "systeminfo",
+        "field": "memory.percent",
+        "interval": 5000
+      }
+    },
+    {
+      "id": "gpu",
+      "name": "GPU Usage",
+      "nameRu": "Загрузка GPU",
+      "type": "gauge",
+      "enabled": true,
+      "unit": "%",
+      "max": 100,
+      "color": "#8b5cf6",
+      "collect": {
+        "method": "nvidia-smi",
+        "field": "memoryPercent",
+        "interval": 5000
+      }
+    },
+    {
+      "id": "gpu-temp",
+      "name": "GPU Temperature",
+      "nameRu": "Температура GPU",
+      "type": "gauge",
+      "enabled": true,
+      "unit": "°C",
+      "max": 100,
+      "color": "#ef4444",
+      "collect": {
+        "method": "nvidia-smi",
+        "field": "temperature",
+        "interval": 5000
+      }
+    },
+    {
+      "id": "gpu-power",
+      "name": "GPU Power",
+      "nameRu": "Потребление GPU",
+      "type": "gauge",
+      "enabled": false,
+      "unit": "W",
+      "max": 350,
+      "color": "#f59e0b",
+      "collect": {
+        "method": "nvidia-smi",
+        "field": "powerDraw",
+        "interval": 5000
+      }
+    },
+    {
+      "id": "tokens",
+      "name": "Total Tokens",
+      "nameRu": "Всего токенов",
+      "type": "chart",
+      "enabled": true,
+      "unit": "",
+      "color": "#06b6d4",
+      "collect": {
+        "method": "prometheus",
+        "field": "tokens.total",
+        "interval": 10000
+      }
+    },
+    {
+      "id": "requests",
+      "name": "Requests",
+      "nameRu": "Запросов",
+      "type": "chart",
+      "enabled": true,
+      "unit": "",
+      "color": "#8b5cf6",
+      "collect": {
+        "method": "prometheus",
+        "field": "requests",
+        "interval": 10000
+      }
+    },
+    {
+      "id": "tokens-per-sec",
+      "name": "Tokens/sec",
+      "nameRu": "Токенов/сек",
+      "type": "chart",
+      "enabled": true,
+      "unit": "tok/s",
+      "max": 200,
+      "color": "#10b981",
+      "collect": {
+        "method": "prometheus",
+        "field": "tokensPerSec",
+        "interval": 10000
+      }
+    },
+    {
+      "id": "temperature",
+      "name": "CPU Temperature",
+      "nameRu": "Температура CPU",
+      "type": "gauge",
+      "enabled": false,
+      "unit": "°C",
+      "max": 100,
+      "color": "#ef4444",
+      "collect": {
+        "method": "thermal",
+        "interval": 5000
+      }
+    },
+    {
+      "id": "disk",
+      "name": "Disk Usage",
+      "nameRu": "Использование диска",
+      "type": "gauge",
+      "enabled": false,
+      "unit": "%",
+      "max": 100,
+      "color": "#f59e0b",
+      "collect": {
+        "method": "filesystem",
+        "interval": 30000
+      }
+    },
+    {
+      "id": "load",
+      "name": "Load Average",
+      "nameRu": "Средняя нагрузка",
+      "type": "chart",
+      "enabled": false,
+      "unit": "",
+      "color": "#06b6d4",
+      "collect": {
+        "method": "systeminfo",
+        "field": "load",
+        "interval": 5000
+      }
+    },
+    {
+      "id": "cpu-fan",
+      "name": "CPU Fan Speed",
+      "nameRu": "Вентилятор CPU",
+      "type": "gauge",
+      "enabled": true,
+      "unit": "RPM",
+      "max": 8000,
+      "color": "#10b981",
+      "collect": {
+        "method": "command",
+        "command": "cat /sys/class/hwmon/hwmon0/fan1_input 2>/dev/null || echo 0",
+        "regex": null,
+        "field": null,
+        "interval": 5000
+      },
+      "custom": true,
+      "description": "CPU fan speed from hwmon"
+    }
+  ]
+}
