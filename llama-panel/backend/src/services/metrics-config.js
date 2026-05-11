@@ -341,7 +341,7 @@ export async function collectMetricData(metric) {
 // Collection methods
 async function collectCpuUsage() {
   try {
-    const { exec } = await import('child_process')
+    const { exec, execSync } = await import('child_process')
     const { promisify } = await import('util')
     const execAsync = promisify(exec)
     
