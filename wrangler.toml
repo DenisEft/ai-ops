@@ -1,0 +1,3 @@
+name = "twilight-sound-6bfb"
+main = "cloudflare-worker.js"
+compatibility_date = "2025-01-01"
