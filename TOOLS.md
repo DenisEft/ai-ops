@@ -13,17 +13,36 @@ Things like:
 - Device nicknames
 - Anything environment-specific
 
+### 🔐 Секреты
+
+Все пароли хранятся в `pass` (GPG-хранилище):
+
+```bash
+pass show sudo-password         # sudo
+pass show yandex-app-password   # email app password
+pass show yandex-login          # den.eftimitsa@yandex.ru
+pass show webdav-password       # yandex disk
+pass show openclaw-gateway-token
+pass show telegram-bot-token
+```
+
+**GPG ключ:** `B4E6D7FBA487E1B3` (Denis (pass) <den@lora>)
+
+> ⚠️ В самом TOOLS.md секреты НЕ пишу. Если нужны — читаю из pass.
+
+---
+
 ### Email
 
 - Provider: Yandex
-- Address: den.eftimitsa@yandex.ru
-- App Password: gcmaepvsttghkwlx
+- Address: `pass show yandex-login`
+- App Password: `pass show yandex-app-password`
 
 ### WebDAV (Yandex Disk)
 
 - URL: https://webdav.yandex.ru
-- Login: den.eftimitsa@yandex.ru
-- Password: jswnqbrywxugvfue
+- Login: `pass show yandex-login`
+- Password: `pass show webdav-password`
 
 ## Why Separate?
 
