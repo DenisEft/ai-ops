@@ -5,7 +5,7 @@ Providers: OpenRouter (free + paid) + RouterAI (paid)
 Keys loaded from: ~/.openclaw/workspace/secrets/
 """
 
-import sys, os, json, time, urllib.request, urllib.error, concurrent.futures
+import sys, os, json, time, urllib.request, urllib.error, concurrent.futures, argparse
 
 SECRETS_DIR = os.path.expanduser("~/.openclaw/workspace/secrets")
 
@@ -58,28 +58,33 @@ PAID_MODELS = {
 }
 
 # Build active model list
-def build_model_list():
+def build_model_list(free_only=False):
     models = []
     
-    # Priority: paid models first, then free as fallback
-    if USE_ROUTERAI and PAID_MODELS["routerai"]:
-        models.extend([f"routerai:{m}" for m in PAID_MODELS["routerai"]])
-    if USE_OPENROUTER and PAID_MODELS["openrouter"]:
-        models.extend([f"openrouter:{m}" for m in PAID_MODELS["openrouter"]])
+    if free_only:
+        # Monitor mode: only free models
+        if USE_OPENROUTER:
+            models.extend(FREE_MODELS)
+        if len(models) < 3:
+            models.append("openai/gpt-oss-120b:free")
+        models = models[:3]
+    else:
+        # Normal mode: paid first, free as fallback
+        if USE_ROUTERAI and PAID_MODELS["routerai"]:
+            models.extend([f"routerai:{m}" for m in PAID_MODELS["routerai"]])
+        if USE_OPENROUTER and PAID_MODELS["openrouter"]:
+            models.extend([f"openrouter:{m}" for m in PAID_MODELS["openrouter"]])
+        
+        if len(models) < 3 and USE_OPENROUTER:
+            for m in FREE_MODELS:
+                if len(models) >= 3:
+                    break
+                models.append(m)
     
-    # Fill remaining slots with free models if we have < 3
-    if len(models) < 3 and USE_OPENROUTER:
-        for m in FREE_MODELS:
-            if len(models) >= 3:
-                break
-            models.append(m)
-    
-    # If still nothing, error out
     if not models:
-        print("No models configured. Add paid models to PAID_MODELS dict.")
+        print("ERROR: No models available. Check your API keys.")
         sys.exit(1)
     
-    # Take exactly 3 for quorum (or all if < 3)
     return models[:3]
 
 # Select a model by provider
@@ -161,13 +166,13 @@ def quorum_consensus(answers):
     return chosen[0], chosen[1]
 
 def main():
-    if len(sys.argv) < 2:
-        print("Usage: python3 consult.py <question>")
-        sys.exit(1)
+    parser = argparse.ArgumentParser(description="Quorum Consultant")
+    parser.add_argument("question", help="Question to ask")
+    parser.add_argument("--free", action="store_true", help="Use only free models (for monitor)")
+    args = parser.parse_args()
 
-    question = sys.argv[1]
-    
-    MODELS = build_model_list()
+    question = args.question
+    MODELS = build_model_list(free_only=args.free)
     if not MODELS:
         sys.exit(1)
     
