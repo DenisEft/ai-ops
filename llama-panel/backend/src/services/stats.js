@@ -2,7 +2,7 @@ import { spawn } from 'child_process'
 import { pipeline } from 'stream/promises'
 import { Readable, Writable } from 'stream'
 
-const SUDO_PASS = 'XjiQmPeadrq888'
+const SUDO_PASS = process.env.SUDO_PASSWORD || ''
 
 // Log line patterns
 const LOG_RE = /^(\w{3}\s+\d{1,2}\s+\d{2}:\d{2}:\d{2})\s+\S+\s+llama-server\[(\d+)\]:\s+(.+)$/

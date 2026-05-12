@@ -67,10 +67,10 @@ export async function getLlamaStatus() {
 export async function getSystemdServiceStatus(serviceName) {
   try {
     const { stdout } = await execAsync(
-      `echo 'XjiQmPeadrq888' | sudo -S systemctl is-active ${serviceName} 2>/dev/null`
+      `echo '${process.env.SUDO_PASSWORD || ''}' | sudo -S systemctl is-active ${serviceName} 2>/dev/null`
     )
     const { stdout: statusOut } = await execAsync(
-      `echo 'XjiQmPeadrq888' | sudo -S systemctl show ${serviceName} --property=ActiveState,SubState,MainPID,LoadState --value 2>/dev/null`
+      `echo '${process.env.SUDO_PASSWORD || ''}' | sudo -S systemctl show ${serviceName} --property=ActiveState,SubState,MainPID,LoadState --value 2>/dev/null`
     )
 
     return {
@@ -84,28 +84,13 @@ export async function getSystemdServiceStatus(serviceName) {
 
 export async function controlService(action, serviceName) {
   try {
-    await execAsync(`echo 'XjiQmPeadrq888' | sudo -S systemctl ${action} ${serviceName}`)
+    await execAsync(`echo '${process.env.SUDO_PASSWORD || ''}' | sudo -S systemctl ${action} ${serviceName}`)
     return { success: true, action, status: 'ok' }
   } catch (err) {
     return { success: false, action, error: err.message }
   }
 }
 
-export function getGpuMetrics() {
-  return new Promise((resolve, reject) => {
-    exec('nvidia-smi --query-gpu=memory.used,memory.total,name,temperature.gpu,power.draw --format=csv,noheader', (err, stdout) => {
-      if (err) return reject(err)
-      const line = stdout.trim().split('\n')[0]
-      if (!line) return reject(new Error('nvidia-smi returned empty'))
-      const [memUsed, memTotal, name, temp, power] = line.split(',')
-      resolve({
-        name: name.trim(),
-        memoryUsed: parseInt(memUsed),
-        memoryTotal: parseInt(memTotal),
-        temperature: parseInt(temp),
-        powerDraw: parseFloat(power),
-        memoryPercent: Math.round((parseInt(memUsed) / parseInt(memTotal)) * 100),
-      })
-    })
-  })
-}
+// GPU metrics moved to system.js (single source of truth)
+// This file only handles llama-server interaction
+export { getGpuMetrics } from './system.js'
