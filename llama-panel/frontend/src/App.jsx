@@ -1,9 +1,10 @@
+/* eslint-disable no-unused-vars, no-console */
 import { useState, useEffect, useCallback } from 'react'
 import { authFetch, RequireAuth } from './contexts/AuthContext.jsx'
-import Header from './components/Header'
-import Dashboard from './components/Dashboard'
-import Stats from './components/Stats'
-import ErrorBoundary from './components/ErrorBoundary'
+import Header from './components/Header.jsx'
+import Dashboard from './components/Dashboard.jsx'
+import Stats from './components/Stats.jsx'
+import ErrorBoundary from './components/ErrorBoundary.jsx'
 import ProcessMonitor from './components/ProcessMonitor.jsx'
 import BackupManager from './components/BackupManager.jsx'
 import AuditLog from './components/AuditLog.jsx'
@@ -30,6 +31,13 @@ function AppContent() {
   const [statsData, setStatsData] = useState(null)
   const [statsPeriod, setStatsPeriod] = useState('7d')
   const [metricsConfig, setMetricsConfig] = useState(null)
+  // OpenClaw state
+  const [ocGateway, setOcGateway] = useState(null)
+  const [ocSessions, setOcSessions] = useState([])
+  const [ocMetrics, setOcMetrics] = useState(null)
+  const [ocPanel, setOcPanel] = useState(null)
+  const [ocLoading, setOcLoading] = useState(false)
+  const [ocAction, setOcAction] = useState(null)
   const [notifyMsg, setNotifyMsg] = useState(null)
   const [notifyType, setNotifyType] = useState('info')
 
@@ -42,21 +50,17 @@ function AppContent() {
   const fetchMetrics = useCallback(async () => {
     try {
       const res = await authFetch('/api/metrics')
-      console.log('[APP] fetchMetrics response:', res.status, res.ok)
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const json = await res.json()
-      console.log('[APP] fetchMetrics data:', !!json, 'cpu:', json.cpu?.brand, 'mem:', json.memory?.percent)
       setData(json)
       setError(null)
       setWsStatus('connected')
     } catch (err) {
-      console.error('[APP] fetchMetrics error:', err.message)
       if (err.name !== 'AbortError') {
         setError(err.message)
         setWsStatus('disconnected')
       }
     } finally {
-      console.log('[APP] fetchMetrics done, loading:', false)
       setLoading(false)
     }
   }, [])
@@ -115,6 +119,41 @@ function AppContent() {
   }, [])
 
   useEffect(() => { fetchServices() }, [fetchServices])
+
+  // OpenClaw data
+  const loadOpenclaw = useCallback(async () => {
+    setOcLoading(true)
+    try {
+      const [gwRes, sesRes, metRes, panelRes] = await Promise.all([
+        authFetch('/api/openclaw/gateway'),
+        authFetch('/api/openclaw/sessions'),
+        authFetch('/api/openclaw/metrics'),
+        authFetch('/api/service/llama-panel'),
+      ])
+      setOcGateway(gwRes.ok ? await gwRes.json() : null)
+      setOcSessions(sesRes.ok ? await sesRes.json() : [])
+      setOcMetrics(metRes.ok ? await metRes.json() : null)
+      setOcPanel(panelRes.ok ? await panelRes.json() : null)
+    } catch (err) {
+      console.error('OpenClaw load error:', err)
+    }
+    setOcLoading(false)
+  }, [])
+
+  useEffect(() => {
+    if (tab === 'openclaw') loadOpenclaw()
+  }, [tab, loadOpenclaw])
+
+  const openclawAction = useCallback(async (action) => {
+    setOcAction(action)
+    try {
+      const res = await authFetch(`/api/openclaw/${action}`, { method: 'POST' })
+      if (res.ok) await loadOpenclaw()
+    } catch (err) {
+      alert(`Ошибка: ${err.message}`)
+    }
+    setOcAction(null)
+  }, [loadOpenclaw])
 
   const controlService = useCallback(async (id, action) => {
     try {
@@ -185,6 +224,7 @@ function AppContent() {
 
   const tabItems = [
     { id: 'metrics', label: 'Метрики', icon: '📊' },
+    { id: 'openclaw', label: 'OpenClaw', icon: '🐾' },
     { id: 'stats', label: 'Статистика', icon: '📈' },
     { id: 'control', label: 'Управление', icon: '🛠' },
     { id: 'config', label: 'Конфиг', icon: '⚙️' },
@@ -249,6 +289,101 @@ function AppContent() {
           </ErrorBoundary>
         )}
 
+        {/* OpenClaw tab */}
+        {tab === 'openclaw' && (
+          <div className="space-y-6">
+            {ocLoading ? (
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
+                <p className="text-gray-400 text-sm">Загрузка OpenClaw...</p>
+              </div>
+            ) : (
+              <>
+                {/* Gateway */}
+                <div className="bg-gray-900/80 border border-gray-800 rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-sm font-semibold text-white">Gateway</h3>
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full ${
+                      ocGateway?.healthy ? 'bg-emerald-500/20 text-emerald-300' : 'bg-red-500/20 text-red-300'
+                    }`}>
+                      {ocGateway?.healthy ? 'Healthy' : 'Unhealthy'}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+                    <div>
+                      <div className="text-gray-500 mb-0.5">Model</div>
+                      <div className="text-white font-mono truncate" title={ocGateway?.model}>{ocGateway?.model || '—'}</div>
+                    </div>
+                    <div>
+                      <div className="text-gray-500 mb-0.5">Sessions</div>
+                      <div className="text-white font-semibold">{ocGateway?.sessions ?? '—'}</div>
+                    </div>
+                    <div>
+                      <div className="text-gray-500 mb-0.5">Version</div>
+                      <div className="text-white font-mono">{ocGateway?.version || '—'}</div>
+                    </div>
+                    <div>
+                      <div className="text-gray-500 mb-0.5">Port</div>
+                      <div className="text-white font-mono">{ocGateway?.port || 18789}</div>
+                    </div>
+                  </div>
+                  <div className="flex gap-1.5 mt-3">
+                    <button onClick={() => openclawAction('restart')} disabled={ocAction} className="flex-1 bg-amber-600/20 hover:bg-amber-600/40 disabled:opacity-50 text-amber-300 border border-amber-600/30 text-xs py-1.5 rounded transition-colors">
+                      {ocAction === 'restart' ? '...' : '🔄 Restart'}
+                    </button>
+                    <button onClick={() => openclawAction('stop')} disabled={ocAction} className="flex-1 bg-red-600/20 hover:bg-red-600/40 disabled:opacity-50 text-red-300 border border-red-600/30 text-xs py-1.5 rounded transition-colors">
+                      {ocAction === 'stop' ? '...' : '⏹ Stop'}
+                    </button>
+                    <button onClick={() => openclawAction('start')} disabled={ocAction} className="flex-1 bg-emerald-600/20 hover:bg-emerald-600/40 disabled:opacity-50 text-emerald-300 border border-emerald-600/30 text-xs py-1.5 rounded transition-colors">
+                      {ocAction === 'start' ? '...' : '▶ Start'}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Resources */}
+                {ocMetrics && (
+                  <div className="bg-gray-900/80 border border-gray-800 rounded-lg p-4">
+                    <h3 className="text-sm font-semibold text-white mb-2">Ресурсы</h3>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+                      <div>
+                        <div className="text-gray-500 mb-0.5">RAM Total</div>
+                        <div className="text-white font-semibold">{ocMetrics.memoryTotal ? `${ocMetrics.memoryTotal} MB` : '—'}</div>
+                      </div>
+                      <div>
+                        <div className="text-gray-500 mb-0.5">RAM Used</div>
+                        <div className="text-white font-semibold">{ocMetrics.memoryUsed ? `${ocMetrics.memoryUsed} MB` : '—'}</div>
+                      </div>
+                      <div>
+                        <div className="text-gray-500 mb-0.5">RAM Free</div>
+                        <div className="text-white font-semibold">{ocMetrics.memoryFree ? `${ocMetrics.memoryFree} MB` : '—'}</div>
+                      </div>
+                      <div>
+                        <div className="text-gray-500 mb-0.5">CPU Cores</div>
+                        <div className="text-white font-semibold">{ocMetrics.cpuCores ?? '—'}</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Sessions */}
+                {ocSessions.length > 0 && (
+                  <div className="bg-gray-900/80 border border-gray-800 rounded-lg p-4">
+                    <h3 className="text-sm font-semibold text-white mb-2">Сессии ({ocSessions.length})</h3>
+                    <div className="space-y-1 max-h-64 overflow-y-auto">
+                      {ocSessions.slice(-20).reverse().map((s, i) => (
+                        <div key={i} className="flex items-center justify-between text-xs text-gray-400 bg-gray-950/50 rounded px-2 py-1">
+                          <span className="font-mono truncate flex-1">{s.id || s.label || '—'}</span>
+                          <span className="text-gray-600 ml-2 whitespace-nowrap">{s.kind || ''}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        )}
+
         {/* Stats tab */}
         {tab === 'stats' && (
           <Stats data={statsData} period={statsPeriod} setPeriod={setStatsPeriod} />
@@ -262,8 +397,7 @@ function AppContent() {
             </div>
             <div className="grid grid-cols-2 gap-2">
               {(services || []).map(svc => {
-                const status = services.find(s => s.name === `${svc.id}.service`)
-                const active = status?.active
+                const active = services.find(s => s.name === `${svc.id}.service`)?.active
                 return (
                   <div key={svc.id} className="bg-gray-900/80 border border-gray-800 rounded-lg p-2.5">
                     <div className="flex items-center gap-2 mb-2">

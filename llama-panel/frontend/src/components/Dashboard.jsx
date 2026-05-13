@@ -1,160 +1,142 @@
 import { useState, useEffect } from 'react'
-import { useWidgetConfig } from '../hooks/useWidgetConfig'
 import GaugeWidget from './GaugeWidget'
-import MetricsManager from './MetricsManager'
 
-export default function Dashboard({ metrics, loading, metricsConfig }) {
-  const { widgets, reset } = useWidgetConfig()
-  const safeWidgets = Array.isArray(widgets) ? widgets : []
-  const [settingsOpen, setSettingsOpen] = useState(false)
-  const [metricsManagerOpen, setMetricsManagerOpen] = useState(false)
-  
-  const getWidgetData = (id) => {
-    if (!metrics) return null
-    const n = (v) => { const x = Number(v); return (typeof x === 'number' && isFinite(x)) ? x : null }
-    
-    switch (id) {
-      case 'cpu': {
-        const c = metrics.cpu || {}
-        return { cpuUsage: n(c.usage), cpuBrand: c.brand || 'CPU', cpuCores: n(c.cores) || 0, cpuTemp: (c.temperature > 0) ? c.temperature : 'N/A' }
-      }
-      case 'memory': {
-        const m = metrics.memory || {}
-        return { total: n(m.total) || 0, used: n(m.used) || 0, available: n(m.available) || 0, percent: n(m.percent) }
-      }
-      case 'gpu': {
-        const g = metrics.gpu || {}
-        return { gpuModel: g.name || 'GPU', vramUsed: n(g.memoryUsed) ?? 0, vramTotal: n(g.memoryTotal) ?? 0, gpuTemp: n(g.temperature) ?? 0, gpuPower: n(g.powerDraw) ?? 0, gpuClock: 0 }
-      }
-      case 'disk': {
-        const d = metrics.disk || {}
-        const t = n(d.total) || 0, u = n(d.used) || 0
-        return { total: t, used: u, available: Math.max(0, t - u), percent: n(d.percent) }
-      }
-      case 'load': {
-        const l = metrics.load || {}
-        const parts = [l.load1, l.load5, l.load15].filter(v => v != null)
-        return { loadAverage: parts.join(' ') || 'N/A', load1: n(l.load1), load5: n(l.load5), load15: n(l.load15), cpuCores: l.cores || 4 }
-      }
-      case 'gpu-power':
-        return { gpuPower: n(metrics.gpuPower) ?? 0 }
-      case 'service-status':
-        return { services: metrics.services || {} }
-      default:
-        return metrics[id] || null
-    }
-  }
-  
-  const renderWidget = (widget) => {
-    try {
-      const baseData = getWidgetData(widget.id)
-      return <GaugeWidget key={widget.id} metric={{ data: baseData }} widget={widget} />
-    } catch (err) {
-      console.error(`[WIDGET] Error rendering widget ${widget?.id}:`, err)
-      return (
-        <div key={widget?.id} className="bg-red-900/30 border border-red-800/60 rounded-lg p-3">
-          <div className="text-red-400 text-[10px]">Ошибка: {widget?.id || 'unknown'}</div>
-        </div>
-      )
-    }
-  }
-  
-  // Filter out stats-type widgets from metrics tab (they belong in Stats tab)
-  const STATS_IDS = new Set(['stats', 'stat', 'tokens', 'requests', 'tokens-per-sec', 'temperature', 'token-rate'])
-  const enabledWidgets = safeWidgets.filter(w => w.enabled && !STATS_IDS.has(w.id))
-  
-  // Also filter out any widget whose type is 'stats'
-  const _metricsOnlyWidgets = enabledWidgets.filter(w => w.type !== 'stats' && w.type !== 'chart' && w.type !== 'table' && w.type !== 'status')
-  
-  // Stats-related widget IDs to exclude from Metrics tab
-  const STATS_WIDGET_IDS = new Set(['stats', 'stat', 'tokens', 'requests', 'tokens-per-sec', 'temperature', 'token-rate', 'gpu-power', 'service-status'])
-  
-  // Filter out stats widgets from the grid - they only belong in Stats tab
-  const GRID_WIDGETS = enabledWidgets.filter(w => !STATS_WIDGET_IDS.has(w.id))
-  const hasEnabledWidgets = GRID_WIDGETS.length > 0
-  
+const API = import.meta.env.VITE_API_URL || 'http://localhost:8081'
+
+function formatUptime(seconds) {
+  if (!seconds) return 'N/A'
+  const days = Math.floor(seconds / 86400)
+  const hours = Math.floor((seconds % 86400) / 3600)
+  const minutes = Math.floor((seconds % 3600) / 60)
+  if (days > 0) return `${days}d ${hours}h`
+  if (hours > 0) return `${hours}h ${minutes}m`
+  return `${minutes}m`
+}
+
+export default function Dashboard({ metrics, statsData, loading, wsStatus, metricsConfig }) {
+  const [system, setSystem] = useState(null)
+  const [gpu, setGpu] = useState(null)
+  const [llama, setLlama] = useState(null)
+  const [service, setService] = useState(null)
+  const [openclaw, setOpenclaw] = useState(null)
+
   useEffect(() => {
-    if (!hasEnabledWidgets && loading === false) {
-      reset()
+    const loadData = async () => {
+      try {
+        const [sysRes, gpuRes, llamaRes, svcRes, ocRes] = await Promise.all([
+          fetch(`${API}/api/metrics/system`),
+          fetch(`${API}/api/metrics/gpu`),
+          fetch(`${API}/api/metrics/llama`),
+          fetch(`${API}/api/metrics/service`),
+          fetch(`${API}/api/openclaw/status`),
+        ])
+        setSystem(await sysRes.json())
+        setGpu(await gpuRes.json())
+        setLlama(await llamaRes.json())
+        setService(await svcRes.json())
+        setOpenclaw(ocRes.ok ? await ocRes.json() : null)
+      } catch (err) {
+        console.error('Failed to load dashboard:', err)
+      }
     }
-  }, [hasEnabledWidgets, loading, reset])
-  
-  // KPI row
-  const kpis = []
-  if (metrics) {
-    const cpu = metrics.cpu?.usage
-    if (cpu !== undefined && cpu !== null) kpis.push({ label: 'CPU', value: `${Math.round(cpu)}%`, color: cpu > 80 ? 'red' : cpu > 60 ? 'amber' : 'blue' })
-    
-    const mem = metrics.memory?.percent
-    if (mem !== undefined && mem !== null) kpis.push({ label: 'RAM', value: `${Math.round(mem)}%`, color: mem > 90 ? 'red' : mem > 70 ? 'amber' : 'blue' })
-    
-    const gpu = metrics.gpu?.memoryUsed
-    if (gpu !== undefined && gpu !== null && metrics.gpu?.memoryTotal > 0) {
-      const pct = Math.round((gpu / metrics.gpu.memoryTotal) * 100)
-      kpis.push({ label: 'VRAM', value: `${Math.round(pct)}%`, color: pct > 90 ? 'red' : pct > 70 ? 'amber' : 'purple' })
-    }
-    
-    const gpuTemp = metrics.gpu?.temperature
-    if (gpuTemp !== undefined && gpuTemp !== null && gpuTemp > 0) kpis.push({ label: 'GPU T', value: `${Math.round(gpuTemp)}°`, color: gpuTemp > 80 ? 'red' : 'cyan' })
-  }
+    loadData()
+    const interval = setInterval(loadData, 5000)
+    return () => clearInterval(interval)
+  }, [])
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="flex flex-col items-center gap-2">
-          <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-          <span className="text-gray-500 text-[9px]">Загрузка метрик…</span>
+  return (
+    <div className="space-y-6">
+      {/* Status bar */}
+      <div className="flex items-center justify-between text-xs text-gray-500">
+        <span>WS: <span className={wsStatus === 'connected' ? 'text-emerald-400' : 'text-red-400'}>{wsStatus}</span></span>
+        <span>llama: <span className={llama?.status === 'ok' ? 'text-emerald-400' : 'text-red-400'}>{llama?.status || '—'}</span></span>
+        <span>OC: <span className={openclaw?.active ? 'text-emerald-400' : 'text-red-400'}>{openclaw?.active ? 'active' : 'inactive'}</span></span>
+      </div>
+
+      {/* Service cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        {/* OpenClaw */}
+        <div className="bg-gray-900/80 border border-gray-800 rounded-lg p-3">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-white">🐾 OpenClaw</span>
+            <span className={`text-[10px] px-2 py-0.5 rounded-full ${openclaw?.active ? 'bg-emerald-500/20 text-emerald-300' : 'bg-red-500/20 text-red-300'}`}>
+              {openclaw?.active ? 'Active' : 'Down'}
+            </span>
+          </div>
+          <div className="space-y-1 text-xs text-gray-400">
+            <div className="flex justify-between"><span>PID</span><span className="text-white font-mono">{openclaw?.pid || '—'}</span></div>
+            <div className="flex justify-between"><span>Port</span><span className="text-white font-mono">{openclaw?.port || '—'}</span></div>
+            <div className="flex justify-between"><span>Uptime</span><span className="text-white">{formatUptime(system?.openclawUptime)}</span></div>
+          </div>
+        </div>
+
+        {/* Llama Server */}
+        <div className="bg-gray-900/80 border border-gray-800 rounded-lg p-3">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-white">🦙 Llama Server</span>
+            <span className={`text-[10px] px-2 py-0.5 rounded-full ${llama?.status === 'ok' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-red-500/20 text-red-300'}`}>
+              {llama?.status || '—'}
+            </span>
+          </div>
+          <div className="space-y-1 text-xs text-gray-400">
+            <div className="flex justify-between"><span>Model</span><span className="text-white text-[10px] truncate" title={llama?.model}>{llama?.model || '—'}</span></div>
+            <div className="flex justify-between"><span>Queue</span><span className="text-white">{llama?.queue_size || 0}</span></div>
+            <div className="flex justify-between"><span>Tokens/s</span><span className="text-emerald-400 font-medium">{llama?.tokens_per_second?.toFixed(1) || '—'}</span></div>
+            <div className="flex justify-between"><span>Uptime</span><span className="text-white">{formatUptime(llama?.uptime_seconds)}</span></div>
+          </div>
+        </div>
+
+        {/* Llama Panel */}
+        <div className="bg-gray-900/80 border border-gray-800 rounded-lg p-3">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-white">📊 Panel</span>
+            <span className={`text-[10px] px-2 py-0.5 rounded-full ${service?.llama_panel?.active ? 'bg-emerald-500/20 text-emerald-300' : 'bg-red-500/20 text-red-300'}`}>
+              {service?.llama_panel?.active ? 'Active' : 'Down'}
+            </span>
+          </div>
+          <div className="space-y-1 text-xs text-gray-400">
+            <div className="flex justify-between"><span>PID</span><span className="text-white font-mono">{service?.llama_panel?.pid || '—'}</span></div>
+            <div className="flex justify-between"><span>Port</span><span className="text-white font-mono">{service?.llama_panel?.port || '—'}</span></div>
+          </div>
         </div>
       </div>
-    )
-  }
-  
-  return (
-    <div className="relative">
-      {/* KPI Row */}
-      {kpis.length > 0 && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-1 mb-2">
-          {kpis.map((kpi, i) => (
-            <div key={i} className="kpi-card py-1.5">
-              <div className="kpi-label text-[9px]">{kpi.label}</div>
-              <div className={`kpi-value-sm text-${kpi.color}-400 text-sm`}>{kpi.value}</div>
+
+      {/* System & GPU gauges */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <GaugeWidget label="CPU" value={system?.cpu?.usage || 0} max={100} color="blue" />
+        <GaugeWidget label="RAM" value={system?.memory?.used_percent || 0} max={100} color="green" />
+        <GaugeWidget label="GPU Temp" value={gpu?.temperature || 0} max={100} color="purple" />
+        <GaugeWidget label="GPU Load" value={gpu?.utilization || 0} max={100} color="cyan" />
+      </div>
+
+      {/* LLM Metrics */}
+      {llama && llama.metrics && (
+        <div className="bg-gray-900/80 border border-gray-800 rounded-lg p-3">
+          <h3 className="text-xs font-medium text-gray-400 mb-2">LLM Metrics</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+            <div>
+              <span className="text-gray-500">Tokens/sec:</span>
+              <span className="ml-2 font-medium text-emerald-400">
+                {llama.tokens_per_second?.toFixed(1) ?? '—'}
+              </span>
             </div>
-          ))}
-        </div>
-      )}
-      
-      {/* Widget grid */}
-      {hasEnabledWidgets ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-          {GRID_WIDGETS.map(w => (
-            <div key={w.id}>
-              {renderWidget(w)}
+            <div>
+              <span className="text-gray-500">Decoded:</span>
+              <span className="ml-2 font-medium text-white">
+                {llama.metrics.llama_tokens_decoded ?? '—'}
+              </span>
             </div>
-          ))}
-        </div>
-      ) : (
-        <div className="text-center py-12 text-gray-500">
-          <div className="text-2xl mb-2">📊</div>
-          <p className="text-[10px] mb-2">Включите хотя бы один виджет</p>
-          <button onClick={() => setSettingsOpen(true)} className="btn-sm btn-blue text-[10px]">Настройки</button>
-        </div>
-      )}
-      
-      {/* Settings button */}
-      <button
-        onClick={() => setSettingsOpen(!settingsOpen)}
-        className="fixed bottom-3 right-3 z-30 w-7 h-7 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-full flex items-center justify-center text-gray-400 hover:text-white transition-all text-sm shadow-lg"
-        title="Настройки виджетов"
-      >
-        ⚙
-      </button>
-      
-      {/* Metrics manager */}
-      {metricsManagerOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-gray-900 border border-gray-800 rounded-xl shadow-2xl w-full max-w-xl max-h-[80vh] overflow-y-auto">
-            <div className="p-3">
-              <MetricsManager metrics={Array.isArray(metricsConfig) ? metricsConfig : []} onClose={() => setMetricsManagerOpen(false)} />
+            <div>
+              <span className="text-gray-500">Promoted:</span>
+              <span className="ml-2 font-medium text-white">
+                {llama.metrics.llama_tokens_promoted ?? '—'}
+              </span>
+            </div>
+            <div>
+              <span className="text-gray-500">Context:</span>
+              <span className="ml-2 font-medium text-white">
+                {llama.metrics.llama_context_size ?? '—'}
+              </span>
             </div>
           </div>
         </div>

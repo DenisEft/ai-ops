@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import { useState, useEffect, useCallback } from 'react'
 import { authFetch } from '../contexts/AuthContext.jsx'
 
@@ -22,8 +23,6 @@ export default function ProcessMonitor({ onNotify }) {
           }
         }
       }
-    } catch (err) {
-      console.error('Process monitor fetch error:', err)
     } finally {
       setLoading(false)
     }
@@ -92,7 +91,7 @@ export default function ProcessMonitor({ onNotify }) {
     <div className="space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-gray-300">🔍 AI Process Intelligence</h2>
+        <h2 className="text-sm font-semibold text-gray-300">🔍 AI Процессы</h2>
         <div className="flex gap-2">
           <button
             onClick={() => setMonitoring(!monitoring)}
@@ -102,7 +101,7 @@ export default function ProcessMonitor({ onNotify }) {
                 : 'bg-gray-800 text-gray-400 hover:text-gray-200'
             }`}
           >
-            {monitoring ? '⏹ Стоп' : '▶ Мониторинг'}
+            {monitoring ? '⏹ Авто-обновление' : '▶ Авто-обновление 10с'}
           </button>
           <button
             onClick={() => { setLoading(true); fetchReport(); fetchAlerts(); fetchHistory() }}
@@ -179,101 +178,6 @@ export default function ProcessMonitor({ onNotify }) {
                 )}
               </div>
             ))}
-          </div>
-        </div>
-      )}
-
-      {/* GPU & System */}
-      {(report?.gpu || report?.system) && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-          {report.gpu?.temperature !== null && (
-            <div className={`bg-gray-900/80 border rounded-lg p-3 ${
-              report.gpu.status === 'critical' ? 'border-red-500/30' :
-              report.gpu.status === 'warning' ? 'border-amber-500/30' : 'border-gray-700'
-            }`}>
-              <div className="text-[10px] text-gray-500 mb-1">GPU Temp</div>
-              <div className={`text-lg font-bold ${
-                report.gpu.status === 'critical' ? 'text-red-400' :
-                report.gpu.status === 'warning' ? 'text-amber-400' : 'text-emerald-400'
-              }`}>
-                {report.gpu.temperature}°C
-              </div>
-            </div>
-          )}
-          {report.gpu?.memory && (
-            <div className="bg-gray-900/80 border border-gray-700 rounded-lg p-3">
-              <div className="text-[10px] text-gray-500 mb-1">GPU VRAM</div>
-              <div className="text-lg font-bold text-blue-400">
-                {report.gpu.memory.used} / {report.gpu.memory.total} MB
-              </div>
-              <div className="w-full bg-gray-800 rounded-full h-1.5 mt-1">
-                <div
-                  className="bg-blue-500 h-1.5 rounded-full"
-                  style={{ width: `${report.gpu.memory.percent}%` }}
-                />
-              </div>
-            </div>
-          )}
-          {report.system?.cpuLoad !== undefined && (
-            <div className="bg-gray-900/80 border border-gray-700 rounded-lg p-3">
-              <div className="text-[10px] text-gray-500 mb-1">CPU Load</div>
-              <div className="text-lg font-bold text-purple-400">
-                {report.system.cpuLoad}%
-              </div>
-              <div className="w-full bg-gray-800 rounded-full h-1.5 mt-1">
-                <div
-                  className="bg-purple-500 h-1.5 rounded-full"
-                  style={{ width: `${report.system.cpuLoad}%` }}
-                />
-              </div>
-            </div>
-          )}
-          {report.system?.ramLoad !== undefined && (
-            <div className="bg-gray-900/80 border border-gray-700 rounded-lg p-3">
-              <div className="text-[10px] text-gray-500 mb-1">RAM</div>
-              <div className="text-lg font-bold text-cyan-400">
-                {report.system.ramLoad}%
-              </div>
-              <div className="w-full bg-gray-800 rounded-full h-1.5 mt-1">
-                <div
-                  className="bg-cyan-500 h-1.5 rounded-full"
-                  style={{ width: `${report.system.ramLoad}%` }}
-                />
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* LLM Metrics */}
-      {report?.llama && (
-        <div className="bg-gray-900/80 border border-gray-700 rounded-lg p-3">
-          <h3 className="text-xs font-medium text-gray-400 mb-2">LLM Metrics</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-            <div>
-              <span className="text-gray-500">Tokens/sec:</span>
-              <span className="ml-2 font-medium text-emerald-400">
-                {report.llama.tokenRate?.toFixed(1) ?? '—'}
-              </span>
-            </div>
-            <div>
-              <span className="text-gray-500">Decoded:</span>
-              <span className="ml-2 font-medium text-white">
-                {report.llama.metrics?.llama_tokens_decoded ?? '—'}
-              </span>
-            </div>
-            <div>
-              <span className="text-gray-500">Promoted:</span>
-              <span className="ml-2 font-medium text-white">
-                {report.llama.metrics?.llama_tokens_promoted ?? '—'}
-              </span>
-            </div>
-            <div>
-              <span className="text-gray-500">Context:</span>
-              <span className="ml-2 font-medium text-white">
-                {report.llama.metrics?.llama_context_size ?? '—'}
-              </span>
-            </div>
           </div>
         </div>
       )}
