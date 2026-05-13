@@ -206,4 +206,39 @@ export function authFetch(url, options = {}) {
   }
 
   return fetch(url, { ...options, headers })
+    .then(async (res) => {
+      if (res.status === 403) {
+        const data = await res.json().catch(() => ({}))
+        const err = new Error(data.error || 'Доступ запрещён')
+        err.role = data.role
+        err.required = data.required
+        throw err
+      }
+      return res
+    })
+}
+
+// Check if user has permission
+export function hasPermission(user, permission) {
+  if (!user || !user.role) return false
+  const rolePermissions = {
+    admin: ['metrics:read', 'service:control', 'service:config', 'auth:manage', 'backup:read', 'backup:create', 'backup:restore', 'backup:delete', 'process:monitor', 'config:read', 'config:write'],
+    viewer: ['metrics:read', 'process:monitor'],
+    readonly: ['metrics:read'],
+  }
+  const perms = rolePermissions[user.role] || []
+  return perms.includes(permission)
+}
+
+// Wrapper to check permission before rendering
+export function RequirePermission({ children, permission, fallback = null }) {
+  const { user } = useAuth()
+  if (!hasPermission(user, permission)) {
+    return fallback || (
+      <div className="p-4 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-300 text-sm">
+        🔒 Доступ запрещён. Требуется роль с правом: {permission}
+      </div>
+    )
+  }
+  return children
 }

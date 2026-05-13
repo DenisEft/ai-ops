@@ -5,13 +5,19 @@ import { getConfig, updateConfig } from '../services/config.js'
 import { getStats } from '../services/stats.js'
 import { exec } from 'child_process'
 import { promisify } from 'util'
+import { getAuditLogger } from '../services/audit.js'
+import { requirePermission, requireAnyPermission } from '../services/rbac.js'
 
 
 const router = Router()
 const execAsync = promisify(exec)
+const audit = getAuditLogger()
 
 // Protect all routes
 router.use(authenticateToken)
+
+// RBAC: control endpoints — admin only
+router.post('/control', requirePermission('service:control'), async (req, res) => {
 
 // Known services
 const KNOWN_SERVICES = [
@@ -53,6 +59,7 @@ router.post('/control', async (req, res) => {
 
   try {
     const result = await controlService(action, svc.name)
+    audit.log({ action: 'service_control', resource: svc.name, details: { action }, success: result.success })
     res.json(result)
   } catch (err) {
     res.status(500).json({ error: err.message })
@@ -88,9 +95,10 @@ router.get('/config', async (req, res) => {
   }
 })
 
-router.put('/config', async (req, res) => {
+router.put('/config', requirePermission('service:config'), async (req, res) => {
   try {
     const result = await updateConfig(req.body)
+    audit.log({ action: 'service_config', resource: 'llama-config', details: { config: req.body }, success: result.success })
     res.json(result)
   } catch (err) {
     res.status(400).json({ error: err.message })

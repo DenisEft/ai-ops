@@ -4,6 +4,9 @@ import Header from './components/Header'
 import Dashboard from './components/Dashboard'
 import Stats from './components/Stats'
 import ErrorBoundary from './components/ErrorBoundary'
+import ProcessMonitor from './components/ProcessMonitor.jsx'
+import BackupManager from './components/BackupManager.jsx'
+import AuditLog from './components/AuditLog.jsx'
 
 const REFRESH_INTERVAL = 3000
 
@@ -27,6 +30,14 @@ function AppContent() {
   const [statsData, setStatsData] = useState(null)
   const [statsPeriod, setStatsPeriod] = useState('7d')
   const [metricsConfig, setMetricsConfig] = useState(null)
+  const [notifyMsg, setNotifyMsg] = useState(null)
+  const [notifyType, setNotifyType] = useState('info')
+
+  const handleNotify = useCallback((type, msg) => {
+    setNotifyType(type)
+    setNotifyMsg(msg)
+    setTimeout(() => setNotifyMsg(null), 5000)
+  }, [])
 
   const fetchMetrics = useCallback(async () => {
     try {
@@ -177,7 +188,10 @@ function AppContent() {
     { id: 'stats', label: 'Статистика', icon: '📈' },
     { id: 'control', label: 'Управление', icon: '🛠' },
     { id: 'config', label: 'Конфиг', icon: '⚙️' },
-    { id: 'logs', label: 'Логи', icon: '📋' },
+    { id: 'process', label: 'AI Процессы', icon: '🔍' },
+    { id: 'backup', label: 'Бэкапы', icon: '💾' },
+    { id: 'audit', label: 'Аудит', icon: '📋' },
+    { id: 'logs', label: 'Логи', icon: '📄' },
   ]
 
   return (
@@ -213,6 +227,18 @@ function AppContent() {
         {error && tab === 'metrics' && (
           <div className="mb-4 p-4 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
             ⚠️ {error}
+          </div>
+        )}
+
+        {notifyMsg && (
+          <div className={`mb-4 p-3 rounded-lg border text-sm ${
+            notifyType === 'warning'
+              ? 'bg-amber-500/10 border-amber-500/30 text-amber-300'
+              : notifyType === 'error'
+              ? 'bg-red-500/10 border-red-500/30 text-red-300'
+              : 'bg-blue-500/10 border-blue-500/30 text-blue-300'
+          }`}>
+            {notifyMsg}
           </div>
         )}
 
@@ -370,6 +396,21 @@ WantedBy=multi-user.target`}
               </pre>
             </div>
           </div>
+        )}
+
+        {/* Process Monitor tab */}
+        {tab === 'process' && (
+          <ProcessMonitor onNotify={handleNotify} />
+        )}
+
+        {/* Backup Manager tab */}
+        {tab === 'backup' && (
+          <BackupManager />
+        )}
+
+        {/* Audit Log tab */}
+        {tab === 'audit' && (
+          <AuditLog />
         )}
 
         {/* Logs tab */}

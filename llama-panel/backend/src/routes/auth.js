@@ -1,8 +1,10 @@
 import { Router } from 'express'
 import * as authService from '../services/auth.js'
 import authLimiter from '../services/rate-limit.js'
+import { getAuditLogger } from '../services/audit.js'
 
 const router = Router()
+const audit = getAuditLogger()
 
 // Login — rate limited
 router.post('/login', (req, res, next) => {
@@ -20,9 +22,11 @@ router.post('/login', (req, res, next) => {
 
     const result = await authService.login(username, password)
     if (!result) {
+      audit.log({ action: 'login', resource: 'auth', ip, success: false, details: { username } })
       return res.status(401).json({ error: 'Неверный логин или пароль' })
     }
 
+    audit.log({ action: 'login', resource: 'auth', userId: result.user.username, ip, success: true })
     res.json(result)
   } catch (err) {
     // eslint-disable-next-line no-console

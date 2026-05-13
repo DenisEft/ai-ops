@@ -67,13 +67,17 @@
 | Решение | Обоснование |
 |---------|-------------|
 | WebSocket для метрик | Обновление каждые 2 секунды без polling-нагрузки на CPU |
-| JSON-файл для конфигурации метрик | Простота, без базы данных, легко читать/редактировать |
+| JSON-файл для конфигурации метрик | Простота, без БД, легко читать/редактировать |
 | JWT + bcrypt | Stateless-сессии, пароли не хранятся в открытом виде |
 | systeminformation + nvidia-smi | Надёжные метрики GPU/CPU на Linux |
 | journalctl для логов | Стандартный Linux-логгер, не нужен отдельный стек |
 | Dual-mode: polling (3s) + WebSocket | Fallback если WebSocket недоступен |
 | SPA (React build served by Express) | Один контейнер, один порт, CORS не нужен |
-| `npx --package=systemd2api npx systemd2api` | Чтение systemd-конфига без root-привилегий |
+| `systemd2api` | Чтение systemd-конфига без root-привилегий |
+
+### WebSocket
+
+Подключается на `/ws?token=<jwt>`. После подключения клиент отправляет `{"type":"subscribe"}` для получения метрик каждые 2 секунды. Клиенты отключаются через 10 минут неактивности. При потере соединения клиент автоматически переподключается.
 
 ---
 
@@ -142,10 +146,7 @@
 
 Вход в систему.
 
-**Body:**
-```json
-{ "username": "den", "password": "secret" }
-```
+**Body:** `{ "username": "den", "password": "secret" }`
 
 **Response 200:**
 ```json
@@ -234,10 +235,19 @@
 
 **Response 200:**
 ```json
-{ "metrics": [
-  { "id": "cpu", "nameRu": "Загрузка CPU", "type": "gauge", "enabled": true, "unit": "%", "max": 100,
-    "collect": { "method": "procstat", "interval": 5000 } }
-]}
+{
+  "metrics": [
+    {
+      "id": "cpu",
+      "nameRu": "Загрузка CPU",
+      "type": "gauge",
+      "enabled": true,
+      "unit": "%",
+      "max": 100,
+      "collect": { "method": "procstat", "interval": 5000 }
+    }
+  ]
+}
 ```
 
 ---
@@ -248,8 +258,10 @@
 
 **Response 200:**
 ```json
-{ "metrics": [ { "id": "cpu", "name": "Загрузка CPU", "value": 42, "unit": "%", "timestamp": "..." } ],
-  "timestamp": "2026-05-13T15:00:00.000Z" }
+{
+  "metrics": [ { "id": "cpu", "name": "Загрузка CPU", "value": 42, "unit": "%", "timestamp": "..." } ],
+  "timestamp": "2026-05-13T15:00:00.000Z"
+}
 ```
 
 ---
@@ -267,7 +279,12 @@
   "unit": "RPM",
   "max": 3000,
   "color": "#10b981",
-  "collect": { "method": "command", "command": "nvidia-smi --query-gpu=fans.speed --format=csv,noheader", "regex": "(\\d+)", "interval": 5000 },
+  "collect": {
+    "method": "command",
+    "command": "nvidia-smi --query-gpu=fans.speed --format=csv,noheader",
+    "regex": "(\\d+)",
+    "interval": 5000
+  },
   "description": "GPU fan speed"
 }
 ```
@@ -357,7 +374,14 @@
 
 **Body:** `{ "threads": 16, "ctx_len": 131072 }`
 
-**Response 200:** `{ "success": true, "message": "Config updated. Restart service to apply.", "applied": { "threads": 16, "ctx_len": 131072 } }`
+**Response 200:**
+```json
+{
+  "success": true,
+  "message": "Config updated. Restart service to apply.",
+  "applied": { "threads": 16, "ctx_len": 131072 }
+}
+```
 
 ---
 
@@ -366,13 +390,4 @@
 Статистика использования (история токенов и запросов).
 
 **Response 200:**
-```json
-{
-  "period": "7d", "points": [
-    { "date": "2026-05-13", "tokens": 12345, "requests": 89 },
-    { "date": "2026-05-12", "tokens": 10000, "requests": 75 }
-  ]
-}
 ```
-
-**Доступные period:** `24h`, `7d`, `30d

@@ -7,6 +7,9 @@ import metricsRoutes from './routes/metrics.js'
 import metricsConfigRoutes from './routes/metrics-config.js'
 import serviceRoutes from './routes/service.js'
 import authRoutes from './routes/auth.js'
+import processRoutes from './routes/process.js'
+import backupRoutes from './routes/backup.js'
+import auditRoutes from './routes/audit.js'
 import wsManager from './services/websocket.js'
 import * as systemService from './services/system.js'
 import { getLlamaStatus } from './services/llama.js'
@@ -40,6 +43,9 @@ app.use('/api/auth', authRoutes)
 app.use('/api/metrics', metricsRoutes)
 app.use('/api/metrics-config', metricsConfigRoutes)
 app.use('/api/service', serviceRoutes)
+app.use('/api/process', processRoutes)
+app.use('/api/backup', backupRoutes)
+app.use('/api/audit', auditRoutes)
 
 // Health check
 app.get('/health', (req, res) => {
