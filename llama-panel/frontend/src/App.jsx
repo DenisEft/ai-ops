@@ -232,7 +232,7 @@ function AppContent() {
     { id: 'backup', label: 'Бэкапы', icon: '💾' },
     { id: 'audit', label: 'Аудит', icon: '📋' },
     { id: 'logs', label: 'Логи', icon: '📄' },
-  ]
+  ].map(t => ({ ...t, id: t.id }))
 
   return (
     <div className="min-h-screen bg-gray-950 text-white">
@@ -249,6 +249,7 @@ function AppContent() {
             {(tabItems || []).map(t => (
               <button
                 key={t.id}
+                data-testid={`tab-${t.id}`}
                 onClick={() => setTab(t.id)}
                 className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                   tab === t.id

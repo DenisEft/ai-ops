@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import App from '../App'
@@ -70,7 +71,12 @@ describe('App', () => {
     expect(screen.getByText('📈 Статистика')).toBeInTheDocument()
     expect(screen.getByText('🛠 Управление')).toBeInTheDocument()
     expect(screen.getByText('⚙️ Конфиг')).toBeInTheDocument()
-    expect(screen.getByText('📋 Логи')).toBeInTheDocument()
+    expect(screen.getByText('🔍 AI Процессы')).toBeInTheDocument()
+    expect(screen.getByText('💾 Бэкапы')).toBeInTheDocument()
+    expect(screen.getByText('📋 Аудит')).toBeInTheDocument()
+    expect(screen.getByText('📄 Логи')).toBeInTheDocument()
+    // OpenClaw tab (data-testid to avoid conflict with Dashboard card)
+    expect(screen.getByTestId('tab-openclaw')).toBeInTheDocument()
   })
 
   it('shows connection status', () => {

@@ -1,13 +1,13 @@
 # llama-panel — Audit & Cleanup Log
 
-_Обновлено: 2026-05-13 23:00 UTC_
+_Обновлено: 2026-05-13 23:10 UTC_
 
-## Текущая архитектура (после коммита 6059550)
+## Текущая архитектура (после коммита a8d0348)
 
-### Вкладки App.jsx (8 штук → 9 штук)
+### Вкладки App.jsx (9 штук)
 | # | Вкладка | Компонент | Описание |
 |---|---------|-----------|----------|
-| 1 | 📊 Метрики | Dashboard.jsx | Чистый overview: OpenClaw, Llama Server, Llama Panel, CPU/RAM/GU, LLM |
+| 1 | 📊 Метрики | Dashboard.jsx | Чистый overview: OpenClaw, Llama Server, Llama Panel, CPU/RAM/GPU, LLM |
 | 2 | 🐾 OpenClaw | inline (App.jsx) | Gateway, Sessions, Resources, Start/Stop/Restart |
 | 3 | 📈 Статистика | Stats.jsx | Статистика за период |
 | 4 | 🛠 Управление | inline | Управление сервисами (llama-8080, llama-panel) |
@@ -31,6 +31,12 @@ _Обновлено: 2026-05-13 23:00 UTC_
 | ~~MetricsManager.jsx~~ | ❌ УДАЛЁН (мёртвый код, не рендерился) |
 | ~~ChartWidget.jsx~~ | ❌ УДАЛЁН (мёртвый код, не импортировался) |
 | ~~WidgetSettings.jsx~~ | ❌ УДАЛЁН (мёртвый код, не импортировался) |
+
+### Backend routes
+- metrics.js, metrics-config.js, process.js, backup.js, audit.js, service.js, auth.js, openclaw.js
+
+### Backend services
+- process-monitor.js, config-backup.js, https.js, rbac.js, audit.js, openclaw.js, metrics-config.js, metrics.js, system.js, llama.js, websocket.js, stats.js, rate-limit.js, auth.js, config.js
 
 ---
 
@@ -67,19 +73,33 @@ _Обновлено: 2026-05-13 23:00 UTC_
   - Sessions list
 - Данные загружаются через `authFetch` при открытии вкладки
 
+### ✅ Шаг 5: Обновлены тесты
+- Тест `renders all dashboard tabs` обновлён — добавлен `data-testid="tab-openclaw"`
+- Все 4 теста прошли: **4/4 passed**
+
 ### Итог
 - Вкладок: 8 → 9 (добавилась OpenClaw, убраны вложенные табы из Dashboard)
 - Файлов удалено: 3 (28KB мёртвого кода)
 - Дублирование метрик устранено
 - UI стал плоским и понятным
+- Тесты прошли ✅
+
+---
+
+## Коммиты
+
+| Commit | Дата | Описание |
+|--------|------|----------|
+| `a8d0348` | 2026-05-13 23:05 | refactor: clean up llama-panel — remove dead code, flatten Dashboard, deduplicate metrics, add OpenClaw tab |
+| `6059550` | 2026-05-13 15:30 | feat: add AI Process Intelligence, Config Backup, HTTPS, RBAC, Audit Log |
+| `09f914e` | 2026-05-13 14:54 | security: fix critical issues — Dockerfile, CORS, WS auth, rate limiting, dotenv |
+| `2d85278` | 2026-05-12 09:38 | fix: критические проблемы llama-panel |
 
 ---
 
 ## План дальнейшей работы
 
 ### TODO
-- [ ] `npm test` — проверить тесты
-- [ ] `npm run build` — проверить сборку
 - [ ] Рассмотреть объединение вкладок "Управление" и "Конфиг" — если мало используются отдельно
 - [ ] Stats.jsx — проверить, нужен ли или дублируется
 - [ ] Backend: проверить, нужны ли все 8 routes
