@@ -1,12 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useWidgetConfig } from '../hooks/useWidgetConfig'
 import GaugeWidget from './GaugeWidget'
-import WidgetSettings from './WidgetSettings'
 import MetricsManager from './MetricsManager'
 
-export default function Dashboard({ metrics, loading, wsStatus, metricsConfig, version = '2.1' }) {
-  const { widgets, toggleWidget, setSize, setChartType, reorder, reset } = useWidgetConfig()
-  
+export default function Dashboard({ metrics, loading, metricsConfig }) {
+  const { widgets, reset } = useWidgetConfig()
   const safeWidgets = Array.isArray(widgets) ? widgets : []
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [metricsManagerOpen, setMetricsManagerOpen] = useState(false)
@@ -66,7 +64,7 @@ export default function Dashboard({ metrics, loading, wsStatus, metricsConfig, v
   const enabledWidgets = safeWidgets.filter(w => w.enabled && !STATS_IDS.has(w.id))
   
   // Also filter out any widget whose type is 'stats'
-  const metricsOnlyWidgets = enabledWidgets.filter(w => w.type !== 'stats' && w.type !== 'chart' && w.type !== 'table' && w.type !== 'status')
+  const _metricsOnlyWidgets = enabledWidgets.filter(w => w.type !== 'stats' && w.type !== 'chart' && w.type !== 'table' && w.type !== 'status')
   
   // Stats-related widget IDs to exclude from Metrics tab
   const STATS_WIDGET_IDS = new Set(['stats', 'stat', 'tokens', 'requests', 'tokens-per-sec', 'temperature', 'token-rate', 'gpu-power', 'service-status'])

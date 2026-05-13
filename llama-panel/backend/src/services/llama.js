@@ -91,6 +91,3 @@ export async function controlService(action, serviceName) {
   }
 }
 
-// GPU metrics moved to system.js (single source of truth)
-// This file only handles llama-server interaction
-export { getGpuMetrics } from './system.js'

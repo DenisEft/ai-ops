@@ -7,7 +7,7 @@ sudo: `pass show sudo-password`
 ## llama-server (Qwen 35B MoE)
 - Service: `llama-8080.service`
 - Port: 8080, API: `http://127.0.0.1:8080/v1`
-- RAM: ~9 ГБ, context: 200k
+- RAM: ~9 ГБ, context: 200k, KV cache: q8_0, KV cache: q8_0
 - ⚠️ Needs `--metrics` for dashboard
 
 ## llama-panel

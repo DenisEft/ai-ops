@@ -4,7 +4,9 @@ import globals from 'globals'
 export default [
   js.configs.recommended,
   {
+    files: ['src/**/*.js'],
     languageOptions: {
+      ecmaVersion: 2024,
       globals: {
         ...globals.node,
       },

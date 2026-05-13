@@ -2,6 +2,8 @@ import si from 'systeminformation'
 import { execSync, exec } from 'child_process'
 import { promisify } from 'util'
 
+const EXEC_TIMEOUT = 5000 // ms
+
 async function getCpuUsage() {
   try {
     const execAsync = promisify(exec)
@@ -21,6 +23,7 @@ async function getCpuUsage() {
     const id = idle2 - idle1
     return td > 0 ? Math.round(((td - id) / td) * 100) : 0
   } catch (e) {
+    // eslint-disable-next-line no-console
     console.warn('CPU usage from /proc/stat failed:', e?.message || String(e))
     return 0
   }
@@ -28,7 +31,10 @@ async function getCpuUsage() {
 
 function parseNvidiaSmi() {
   try {
-    const out = execSync('nvidia-smi --query-gpu=memory.total,memory.used,temperature.gpu,power.draw --format=csv,noheader').toString().trim()
+    const out = execSync(
+      'nvidia-smi --query-gpu=memory.total,memory.used,temperature.gpu,power.draw --format=csv,noheader',
+      { timeout: EXEC_TIMEOUT }
+    ).toString().trim()
     const [memTotal, memUsed, temp, power] = out.split(',').map(s => s.trim())
     return {
       memoryTotal: parseInt(memTotal) || 0,
@@ -64,6 +70,7 @@ export async function getGpuMetrics() {
       memoryPercent: memoryTotal > 0 ? Math.round((memoryUsed / memoryTotal) * 100) : 0,
     }
   } catch (err) {
+    // eslint-disable-next-line no-console
     console.error('GPU metrics error:', err.message)
     return { name: 'N/A', memoryUsed: 0, memoryTotal: 0, temperature: 0, powerDraw: 0, memoryPercent: 0 }
   }
@@ -91,17 +98,17 @@ export async function getSystemMetrics() {
       if (stdout.trim()) {
         temperature = Math.round(parseInt(stdout.trim()) / 1000)
       }
-    } catch (e) {
+    } catch (_e) { // eslint-disable-line no-unused-vars
       try {
         const { stdout } = await execAsync('cat /sys/class/thermal/thermal_zone*/temp 2>/dev/null | head -1')
         if (stdout.trim()) {
           temperature = Math.round(parseInt(stdout.trim()) / 1000)
         }
-      } catch (e2) {
+      } catch (_e2) { // eslint-disable-line no-unused-vars
         // No temperature sensors
       }
     }
-  } catch (e) {
+  } catch (_e) { // eslint-disable-line no-unused-vars
     // Silent fail
   }
 

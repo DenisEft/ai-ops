@@ -5,7 +5,7 @@ import { getConfig, updateConfig } from '../services/config.js'
 import { getStats } from '../services/stats.js'
 import { exec } from 'child_process'
 import { promisify } from 'util'
-import { readFileSync, writeFileSync } from 'fs'
+
 
 const router = Router()
 const execAsync = promisify(exec)
@@ -73,7 +73,7 @@ router.get('/logs', async (req, res) => {
       { timeout: 5000 }
     )
     res.json({ name: svc.label, lines: parseInt(lines), logs: stdout.trim() })
-  } catch (err) {
+  } catch {
     res.json({ name: svc.label, lines: 0, logs: 'Unable to read logs (journalctl not available)' })
   }
 })

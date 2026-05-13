@@ -1,3 +1,4 @@
+import 'dotenv/config'
 import express from 'express'
 import http from 'http'
 import path from 'path'
@@ -8,7 +9,7 @@ import serviceRoutes from './routes/service.js'
 import authRoutes from './routes/auth.js'
 import wsManager from './services/websocket.js'
 import * as systemService from './services/system.js'
-import * as llamaService from './services/llama.js'
+import { getLlamaStatus } from './services/llama.js'
 import * as configService from './services/config.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -24,9 +25,10 @@ const server = http.createServer(app)
 // Middleware — MUST be before routes
 app.use(express.json())
 
-// CORS
+// CORS — configurable origin, defaults to localhost
+const CORS_ORIGIN = process.env.CORS_ORIGIN || 'http://localhost:8081'
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*')
+  res.header('Access-Control-Allow-Origin', CORS_ORIGIN)
   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization')
   next()
 })
@@ -60,8 +62,8 @@ app.get('*', (req, res) => {
 })
 
 // Error handler
-app.use((err, req, res, next) => {
-  console.error('Unhandled error:', err)
+// eslint-disable-next-line no-unused-vars
+app.use((err, _req, res, _next) => {
   res.status(500).json({ error: 'Internal server error' })
 })
 
@@ -70,17 +72,22 @@ wsManager.init(server, async () => {
   const [system, gpu, llama, service] = await Promise.all([
     systemService.getSystemMetrics(),
     systemService.getGpuMetrics(),
-    llamaService.getLlamaStatus(),
+    getLlamaStatus(),
     configService.getServiceStatus(),
   ])
   return { timestamp: new Date().toISOString(), system, gpu, llama, service }
 })
 
 server.listen(PORT, HOST, () => {
+  // eslint-disable-next-line no-console
   console.log(`🚀 Llama Panel API running on http://${HOST}:${PORT}`)
+  // eslint-disable-next-line no-console
   console.log(`📊 Metrics: http://localhost:${PORT}/api/metrics`)
+  // eslint-disable-next-line no-console
   console.log(`⚙️  Service: http://localhost:${PORT}/api/service`)
+  // eslint-disable-next-line no-console
   console.log(`🔌 WebSocket: ws://${HOST}:${PORT}/ws`)
+  // eslint-disable-next-line no-console
   console.log(`💡 Auto-refresh: every 2s for connected clients`)
 })
 

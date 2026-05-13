@@ -1,4 +1,5 @@
 import { WebSocketServer } from 'ws'
+import { verifyToken } from './auth.js'
 
 class WebSocketManager {
   constructor() {
@@ -12,7 +13,21 @@ class WebSocketManager {
     this.wss = new WebSocketServer({ server, path: '/ws' })
     this.collectFn = collectFn
 
-    this.wss.on('connection', (ws) => {
+    this.wss.on('connection', (ws, raw) => {
+      // Authenticate via query parameter: /ws?token=xxx
+      const url = raw.url
+      const tokenMatch = url.match(/[?&]token=([^&]+)/)
+      if (tokenMatch) {
+        const decoded = verifyToken(tokenMatch[1])
+        if (!decoded) {
+          ws.close(4001, 'Unauthorized')
+          return
+        }
+        ws.user = decoded
+      } else if (process.env.NODE_ENV !== 'test') {
+        ws.close(4001, 'Token required')
+        return
+      }
       this.clients.add(ws)
 
       ws.on('message', (message) => {
@@ -21,7 +36,7 @@ class WebSocketManager {
           if (data.type === 'ping') {
             ws.send(JSON.stringify({ type: 'pong', timestamp: Date.now() }))
           }
-        } catch (err) {
+        } catch {
           // Ignore parse errors
         }
       })
@@ -30,8 +45,9 @@ class WebSocketManager {
         this.clients.delete(ws)
       })
 
-      ws.on('error', (err) => {
-        console.error('WebSocket error:', err.message)
+      ws.on('error', (_err) => {
+        // eslint-disable-next-line no-console
+        console.error('WebSocket error:', _err.message)
         this.clients.delete(ws)
       })
 
@@ -55,8 +71,9 @@ class WebSocketManager {
           timestamp: Date.now(),
         }))
       }
-    } catch (err) {
-      console.error('Failed to send metrics:', err.message)
+    } catch (_err) {
+      // eslint-disable-next-line no-console
+      console.error('Failed to send metrics:', _err.message)
     }
   }
 

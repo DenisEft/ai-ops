@@ -187,6 +187,7 @@ export async function loadMetricsConfig() {
       return Array.from(merged.values())
     }
   } catch (err) {
+    // eslint-disable-next-line no-console
     console.error('Failed to load metrics config:', err.message)
   }
   return DEFAULT_METRICS
@@ -290,7 +291,8 @@ export async function updateMetric(id, updates) {
 export async function collectMetricData(metric) {
   try {
     let value = null
-    let label = ''
+    // eslint-disable-next-line no-unused-vars
+    const label = ''
     
     switch (metric.collect.method) {
       case 'procstat':
@@ -326,6 +328,7 @@ export async function collectMetricData(metric) {
       timestamp: new Date().toISOString()
     }
   } catch (err) {
+    // eslint-disable-next-line no-console
     console.error(`Failed to collect metric ${metric.id}:`, err.message)
     return {
       id: metric.id,
@@ -360,6 +363,7 @@ async function collectCpuUsage() {
     const id = idle2 - idle1
     return td > 0 ? Math.round(((td - id) / td) * 100) : 0
   } catch (err) {
+    // eslint-disable-next-line no-console
     console.warn('CPU usage from /proc/stat failed:', err.message)
     return 0
   }
@@ -379,6 +383,7 @@ async function collectSystemInfo(field) {
     }
     return null
   } catch (err) {
+    // eslint-disable-next-line no-console
     console.warn('systeminfo collection failed:', err.message)
     return null
   }
@@ -408,6 +413,7 @@ async function collectNvidiaSmi(field) {
     }
     return data
   } catch (err) {
+    // eslint-disable-next-line no-console
     console.warn('nvidia-smi collection failed:', err.message)
     return null
   }
@@ -443,6 +449,7 @@ async function collectPrometheus(field) {
     
     return metrics[field] || null
   } catch (err) {
+    // eslint-disable-next-line no-console
     console.warn('prometheus collection failed:', err.message)
     return null
   }
@@ -451,25 +458,25 @@ async function collectPrometheus(field) {
 async function collectTemperature() {
   try {
     const { execSync } = await import('child_process')
-    
+
     // Try /sys/class/thermal first
-    try {
-      const output = execSync('cat /sys/class/thermal/thermal_zone*/temp 2>/dev/null | head -1').toString().trim()
-      if (output) {
-        return Math.round(parseFloat(output) / 1000)
-      }
-    } catch (e) {}
-    
+    let output
+    try { output = execSync('cat /sys/class/thermal/thermal_zone*/temp 2>/dev/null | head -1').toString().trim() }
+    catch { /* ignore */ }
+    if (output) {
+      return Math.round(parseFloat(output) / 1000)
+    }
+
     // Try /sys/devices/platform/coretemp.*
-    try {
-      const output = execSync('cat /sys/devices/platform/coretemp.*/hwmon/hwmon*/temp1_input 2>/dev/null | head -1').toString().trim()
-      if (output) {
-        return Math.round(parseFloat(output) / 1000)
-      }
-    } catch (e) {}
-    
+    try { output = execSync('cat /sys/devices/platform/coretemp.*/hwmon/hwmon*/temp1_input 2>/dev/null | head -1').toString().trim() }
+    catch { /* ignore */ }
+    if (output) {
+      return Math.round(parseFloat(output) / 1000)
+    }
+
     return null
   } catch (err) {
+    // eslint-disable-next-line no-console
     console.warn('temperature collection failed:', err.message)
     return null
   }
@@ -490,6 +497,7 @@ async function collectDiskUsage() {
     // Return max usage
     return Math.max(...fs.map(f => Math.round((f.use / 100) * 100)))
   } catch (err) {
+    // eslint-disable-next-line no-console
     console.warn('disk usage collection failed:', err.message)
     return null
   }
@@ -514,13 +522,14 @@ async function collectCommand(command, regex) {
     
     return parseFloat(stdout)
   } catch (err) {
+    // eslint-disable-next-line no-console
     console.warn(`Command collection failed: ${err.message}`)
     return null
   }
 }
 
 // Get all enabled metrics for a given type
-export function getEnabledMetrics(type) {
+export function getEnabledMetrics(_type) { // eslint-disable-line no-unused-vars
   // Will be called after load
   return null
 }

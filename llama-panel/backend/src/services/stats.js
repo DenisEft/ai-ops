@@ -1,6 +1,4 @@
 import { spawn } from 'child_process'
-import { pipeline } from 'stream/promises'
-import { Readable, Writable } from 'stream'
 
 const SUDO_PASS = process.env.SUDO_PASSWORD || ''
 
@@ -53,7 +51,7 @@ function journalctlStream(sinceParam, nLines) {
       chunks.push(chunk)
     })
     sh.stderr.on('data', () => {}) // ignore stderr
-    sh.on('close', (code) => {
+    sh.on('close', (_code) => { // eslint-disable-line no-unused-vars
       resolve(Buffer.concat(chunks).toString())
     })
     sh.on('error', reject)

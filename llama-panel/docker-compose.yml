@@ -9,6 +9,8 @@ services:
       - PORT=8081
       - LLAMA_URL=http://host.docker.internal:8080
       - SERVICE_NAME=llama-8080.service
+      - JWT_SECRET=${JWT_SECRET:-llama-panel-secure-jwt-secret-2026}
+      - CORS_ORIGIN=http://localhost:8081
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8081/api/metrics"]

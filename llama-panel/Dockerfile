@@ -25,6 +25,8 @@ RUN apk add --no-cache curl
 COPY --from=builder /app/backend/node_modules ./backend/node_modules
 COPY --from=builder /app/backend/src ./backend/src
 COPY --from=builder /app/backend/package.json ./backend/
+COPY --from=builder /app/backend/metrics-config.json ./backend/metrics-config.json
+COPY --from=builder /app/frontend/dist ./frontend/dist
 
 EXPOSE 8081
 

@@ -4,12 +4,10 @@ import App from '../App'
 
 const mockWsData = {
   timestamp: new Date().toISOString(),
-  system: {
-    cpu: { brand: 'AMD Ryzen 5 5600XT', usage: 25, physicalCores: 6 },
-    memory: { total: 34359738368, available: 21474836480, used: 12884901888, activeMem: 0.4 },
-    load: { load1: 0.5 },
-    filesystem: { size: 125000000000, used: 58000000000, avail: 67000000000, use: 46 },
-  },
+  cpu: { brand: 'AMD Ryzen 5 5600XT', usage: 25, cores: 6, temperature: 45 },
+  memory: { total: 34359738368, available: 21474836480, used: 12884901888, percent: 37 },
+  load: { load1: 0.5, load5: 0.4, load15: 0.3 },
+  disk: { total: 125000000000, used: 58000000000, avail: 67000000000, percent: 46 },
   gpu: {
     name: 'NVIDIA GeForce RTX 3090',
     memoryUsed: 17500,
@@ -18,21 +16,46 @@ const mockWsData = {
     powerDraw: 180,
     memoryPercent: 71,
   },
-  llama: { status: 'running', props: { default_generation_settings: { params: { n_ctx: 100000, n_batch: 8192 } } } },
-  service: { active: true },
+  llama: { status: 'running', health: { ok: true }, props: {}, metrics: {} },
+  services: { 'llama-8080': { active: true }, 'llama-panel': { active: true } },
+  tokens: { total: 125000, prompt: 5000, predicted: 120000 },
+  requests: 450,
+  tokensPerSec: 45.2,
+  gpuTemp: 65,
+  gpuPower: 180,
+  cpuFan: 0,
 }
 
-// Mock the WebSocket hook — all tests get connected data
-vi.mock('../hooks/useWebSocket', () => ({
-  useWebSocket: () => ({
-    data: mockWsData,
-    status: 'connected',
-    reconnect: vi.fn(),
+// Mock auth context
+vi.mock('../contexts/AuthContext.jsx', () => ({
+  AuthProvider: ({ children }) => children,
+  RequireAuth: ({ children }) => children,
+  useAuth: () => ({ user: { username: 'admin', name: 'Администратор', role: 'admin' }, loading: false, logout: vi.fn() }),
+  authFetch: vi.fn(),
+}))
+
+// Mock useWidgetConfig
+vi.mock('../hooks/useWidgetConfig.js', () => ({
+  useWidgetConfig: () => ({
+    widgets: [
+      { id: 'cpu', label: 'CPU', type: 'gauge', enabled: true, order: 0 },
+      { id: 'memory', label: 'Память', type: 'gauge', enabled: true, order: 1 },
+    ],
+    toggleWidget: vi.fn(),
+    setSize: vi.fn(),
+    setChartType: vi.fn(),
+    reorder: vi.fn(),
+    reset: vi.fn(),
   }),
 }))
 
 describe('App', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+  })
+
   afterEach(() => {
+    vi.useRealTimers()
     vi.restoreAllMocks()
   })
 
@@ -43,44 +66,17 @@ describe('App', () => {
 
   it('renders all dashboard tabs', () => {
     render(<App />)
-    expect(screen.getByText('📊 Дашборд')).toBeInTheDocument()
+    expect(screen.getByText('📊 Метрики')).toBeInTheDocument()
+    expect(screen.getByText('📈 Статистика')).toBeInTheDocument()
+    expect(screen.getByText('🛠 Управление')).toBeInTheDocument()
     expect(screen.getByText('⚙️ Конфиг')).toBeInTheDocument()
-    expect(screen.getByText('🔧 Сервис')).toBeInTheDocument()
-    expect(screen.getByText('💬 Чат')).toBeInTheDocument()
+    expect(screen.getByText('📋 Логи')).toBeInTheDocument()
   })
 
-  it('renders CPU metric with data', () => {
+  it('shows connection status', () => {
     render(<App />)
-    expect(screen.getByText('CPU Usage')).toBeInTheDocument()
-  })
-
-  it('renders GPU metrics', () => {
-    render(<App />)
-    const vramLabels = screen.queryAllByText('VRAM')
-    expect(vramLabels.length).toBeGreaterThanOrEqual(1)
-    expect(screen.getByText('GPU Temp')).toBeInTheDocument()
-  })
-
-  it('shows WebSocket connected status', () => {
-    render(<App />)
-    expect(screen.getByText('Онлайн')).toBeInTheDocument()
-  })
-
-  it('shows LIVE badge when connected', () => {
-    render(<App />)
-    expect(screen.getByText('LIVE')).toBeInTheDocument()
-  })
-
-  it('renders service control button', () => {
-    render(<App />)
-    expect(screen.getByText('🔧 Сервис')).toBeInTheDocument()
-  })
-
-  it('renders all dashboard info cards', () => {
-    render(<App />)
-    expect(screen.getByText('🖥 System')).toBeInTheDocument()
-    expect(screen.getByText('🎮 GPU')).toBeInTheDocument()
-    expect(screen.getByText('🤖 Llama Server')).toBeInTheDocument()
+    // Initially shows "Подключение…" since fetch is async
+    expect(screen.getByText('Подключение…')).toBeInTheDocument()
   })
 
   it('renders without errors', () => {

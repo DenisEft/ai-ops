@@ -15,5 +15,17 @@ if (!html.includes('?v=' + ts)) {
   html = html.replace(/(src|href)="(\/assets\/[^"]*)"/g, '$1="$2?v=' + ts + '"')
 }
 
+// Remove empty vendor chunks (Vite bug)
+const assetsDir = path.join(__dirname, 'dist', 'assets')
+if (fs.existsSync(assetsDir)) {
+  for (const file of fs.readdirSync(assetsDir)) {
+    const filePath = path.join(assetsDir, file)
+    if (file.startsWith('vendor') && fs.statSync(filePath).size < 100) {
+      fs.unlinkSync(filePath)
+      console.log('🗑 Removed empty vendor chunk:', file)
+    }
+  }
+}
+
 fs.writeFileSync(distPath, html)
 console.log('✅ HTML patched with cache-bust v=' + ts)

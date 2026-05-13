@@ -94,6 +94,7 @@ router.get('/', async (req, res) => {
       llama,
     })
   } catch (err) {
+    // eslint-disable-next-line no-console
     console.error('Metrics error:', err.message)
     res.status(500).json({ error: err.message })
   }

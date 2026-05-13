@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { authFetch, RequireAuth } from './contexts/AuthContext.jsx'
+import Header from './components/Header'
 import Dashboard from './components/Dashboard'
 import Stats from './components/Stats'
-import Header from './components/Header'
 import ErrorBoundary from './components/ErrorBoundary'
 
 const REFRESH_INTERVAL = 3000
@@ -287,7 +287,7 @@ function AppContent() {
               <div className="space-y-2">
                 <div className="bg-gray-900/80 border border-gray-800 rounded-lg p-2">
                   <div className="grid grid-cols-3 gap-2">
-                    {(['threads','gpu_layers','ctx_len','batch_size','parallel','cacheTypeK','cacheTypeV'] || []).map(key => (
+                    {['threads','gpu_layers','ctx_len','batch_size','parallel','cacheTypeK','cacheTypeV'].map(key => (
                       <div key={key}>
                         <label className="text-[10px] text-gray-500 mb-0.5 block">{key.replace('Type', ' Type ').replace('K','K').replace('V','V')}</label>
                         {key.includes('cacheType') ? (

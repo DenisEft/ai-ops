@@ -1,10 +1,17 @@
 import { Router } from 'express'
 import * as authService from '../services/auth.js'
+import authLimiter from '../services/rate-limit.js'
 
 const router = Router()
 
-// Login
-router.post('/login', async (req, res) => {
+// Login — rate limited
+router.post('/login', (req, res, next) => {
+  const ip = req.ip || req.connection.remoteAddress || 'unknown'
+  if (!authLimiter.check(ip)) {
+    return res.status(429).json({ error: 'Слишком много попыток. Подождите минуту.' })
+  }
+  next()
+}, async (req, res) => {
   try {
     const { username, password } = req.body
     if (!username || !password) {
@@ -18,6 +25,7 @@ router.post('/login', async (req, res) => {
 
     res.json(result)
   } catch (err) {
+    // eslint-disable-next-line no-console
     console.error('Login error:', err)
     res.status(500).json({ error: 'Ошибка авторизации' })
   }
@@ -30,6 +38,7 @@ router.post('/change-password', authService.authenticateToken, async (req, res) 
     const result = await authService.changePassword(req.user.username, oldPassword, newPassword)
     res.json(result)
   } catch (err) {
+    // eslint-disable-next-line no-console
     console.error('Change password error:', err)
     res.status(500).json({ error: 'Ошибка при смене пароля' })
   }
@@ -41,6 +50,7 @@ router.get('/users', authService.authenticateToken, (req, res) => {
     const users = authService.listUsers()
     res.json({ users })
   } catch (err) {
+    // eslint-disable-next-line no-console
     console.error('List users error:', err)
     res.status(500).json({ error: 'Ошибка при получении списка пользователей' })
   }
@@ -59,6 +69,7 @@ router.post('/users', authService.authenticateToken, async (req, res) => {
     }
     res.json(result)
   } catch (err) {
+    // eslint-disable-next-line no-console
     console.error('Create user error:', err)
     res.status(500).json({ error: 'Ошибка при создании пользователя' })
   }
@@ -76,6 +87,7 @@ router.delete('/users/:username', authService.authenticateToken, (req, res) => {
     }
     res.json(result)
   } catch (err) {
+    // eslint-disable-next-line no-console
     console.error('Delete user error:', err)
     res.status(500).json({ error: 'Ошибка при удалении пользователя' })
   }

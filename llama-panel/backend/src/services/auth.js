@@ -12,7 +12,9 @@ function getJwtSecret() {
   try {
     const data = JSON.parse(fs.readFileSync(USERS_FILE, 'utf8'))
     if (data.jwtSecret) return data.jwtSecret
-  } catch {}
+  } catch {
+    // use env fallback
+  }
   // Fallback: env var or fixed default (never Math.random!)
   return process.env.JWT_SECRET || 'llama-panel-secure-jwt-secret-2026'
 }
@@ -29,6 +31,7 @@ function loadUsers() {
       if (data.users) return data.users
     }
   } catch (err) {
+    // eslint-disable-next-line no-console
     console.error('Failed to load users:', err.message)
   }
   return []
