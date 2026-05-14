@@ -1,0 +1,41 @@
+# Pre-commit hooks for ai-ops
+# Install: pip install pre-commit && pre-commit install
+# Run manually: pre-commit run --all-files
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+        args: [--allow-multiple-documents]
+      - id: check-json
+      - id: check-case-conflict
+      - id: detect-private-key
+      - id: no-commit-to-branch
+        args: ['--branch', 'main']
+
+  - repo: https://github.com/Lucas-C/pre-commit-hooks
+    rev: v1.5.5
+    hooks:
+      - id: remove-crlf
+      - id: remove-tabs
+
+  - repo: local
+    hooks:
+      - id: frontend-lint
+        name: Frontend Lint
+        entry: bash -c 'cd ai-ops/frontend && npm run lint'
+        language: system
+        files: \.(js|jsx)$
+        types: [file]
+        pass_filenames: false
+
+      - id: backend-lint
+        name: Backend Lint
+        entry: bash -c 'cd ai-ops/backend && npm run lint'
+        language: system
+        files: \.js$
+        types: [file]
+        pass_filenames: false
