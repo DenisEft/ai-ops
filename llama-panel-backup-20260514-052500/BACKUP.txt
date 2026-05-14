@@ -1,0 +1,4 @@
+llama-panel backup
+Date: 2026-05-14 05:25 UTC
+Purpose: Pre-phase-2 development (light theme, backup UI, WebSocket/JWT)
+Includes: backend/, frontend/, users.json, .env

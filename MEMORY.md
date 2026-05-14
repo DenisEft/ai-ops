@@ -1,6 +1,6 @@
 # MEMORY.md — Долгосрочная память Лоры
 
-_Последнее обновление: 2026-05-13_
+_Последнее обновление: 2026-05-14_
 
 ---
 
@@ -26,12 +26,46 @@ _Последнее обновление: 2026-05-13_
 
 ## 🎯 Задачи
 
-### Высокий приоритет
+### Высокий
+- [x] llama-panel → ai-ops: рефакторинг (переименование, driver registry)
+- [x] ai-ops: Driver Registry (llama.cpp, vLLM, TGI, Ollama, OpenAI)
 - [ ] Фаервол: купить адаптер и настроить nftables
-- [ ] Сменить sudo пароль (был в Telegram)
 
 ### Средний
-- [ ] llama-panel: стабилизация, frontend на systemd
+- [ ] ai-ops: frontend на systemd
+- [ ] ai-ops: Web UI для управления драйверами
+- [ ] ai-ops: Desktop sidebar layout
 
 ### Низкий
 - [ ] Умный дом, Connect-сервер, MQTT, погода
+
+---
+
+## 📦 ai-ops (бывш. llama-panel)
+
+**Статус:** Phase 4 в процессе (универсальность)
+
+### Что сделано:
+- ✅ Переименование llama-panel → ai-ops
+- ✅ Driver Registry: llama.cpp, vLLM, TGI, Ollama, OpenAI
+- ✅ Backend: Express.js + WebSocket
+- ✅ Frontend: React + Vite + Tailwind
+- ✅ Bottom tab bar (4 вкладки): Обзор, Метрики, Управление, Настройки
+- ✅ Metrics с Recharts + time range selector
+- ✅ JWT auth + RBAC
+- ✅ Audit log + Backup system
+- ✅ systemd service
+
+### Что осталось:
+- ⬜ Desktop sidebar layout
+- ⬜ Web UI для управления драйверами
+- ⬜ Фикс тестов (4/11 — React import issue)
+- ⬜ README
+
+### Запуск:
+```bash
+cd ai-ops
+npm run install:all
+npm run dev:backend  # :8081
+npm run dev:frontend # :3001
+```

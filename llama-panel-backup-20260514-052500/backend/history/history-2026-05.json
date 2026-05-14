@@ -1,0 +1,187 @@
+[
+  {
+    "timestamp": "2026-05-13T22:13:19.229Z",
+    "processes": [
+      {
+        "name": "llama-server",
+        "pid": "6",
+        "port": 8080,
+        "status": "running",
+        "detectedAt": "2026-05-13T22:13:18.670Z"
+      }
+    ],
+    "gpu": {
+      "temperature": 41,
+      "memory": {
+        "used": 20212,
+        "total": 24576,
+        "percent": 82.24283854166666
+      },
+      "status": "ok"
+    },
+    "system": {
+      "cpuLoad": 0,
+      "ramLoad": 29.7
+    },
+    "llama": null,
+    "anomalies": [
+      {
+        "type": "info",
+        "metric": "token_rate",
+        "value": 0,
+        "threshold": 1,
+        "message": "📉 Низкая скорость генерации: 0.0 токенов/сек",
+        "timestamp": "2026-05-13T22:13:19.229Z"
+      }
+    ],
+    "anomalyCount": 1
+  },
+  {
+    "timestamp": "2026-05-13T22:14:11.617Z",
+    "processes": [
+      {
+        "name": "llama-server",
+        "pid": "6",
+        "port": 8080,
+        "status": "running",
+        "detectedAt": "2026-05-13T22:14:11.072Z"
+      }
+    ],
+    "gpu": {
+      "temperature": 41,
+      "memory": {
+        "used": 20212,
+        "total": 24576,
+        "percent": 82.24283854166666
+      },
+      "status": "ok"
+    },
+    "system": {
+      "cpuLoad": 0,
+      "ramLoad": 29.8
+    },
+    "llama": null,
+    "anomalies": [
+      {
+        "type": "info",
+        "metric": "token_rate",
+        "value": 0,
+        "threshold": 1,
+        "message": "📉 Низкая скорость генерации: 0.0 токенов/сек",
+        "timestamp": "2026-05-13T22:14:11.617Z"
+      }
+    ],
+    "anomalyCount": 1
+  },
+  {
+    "timestamp": "2026-05-13T23:48:49.258Z",
+    "processes": [
+      {
+        "name": "llama-server",
+        "pid": "6",
+        "port": 8080,
+        "status": "running",
+        "detectedAt": "2026-05-13T23:48:48.703Z"
+      }
+    ],
+    "gpu": {
+      "temperature": 41,
+      "memory": {
+        "used": 20212,
+        "total": 24576,
+        "percent": 82.24283854166666
+      },
+      "status": "ok"
+    },
+    "system": {
+      "cpuLoad": 0,
+      "ramLoad": 33.2
+    },
+    "llama": null,
+    "anomalies": [
+      {
+        "type": "info",
+        "metric": "token_rate",
+        "value": 0,
+        "threshold": 1,
+        "message": "📉 Низкая скорость генерации: 0.0 токенов/сек",
+        "timestamp": "2026-05-13T23:48:49.258Z"
+      }
+    ],
+    "anomalyCount": 1
+  },
+  {
+    "timestamp": "2026-05-14T04:35:08.833Z",
+    "processes": [
+      {
+        "name": "llama-server",
+        "pid": "6",
+        "port": 8080,
+        "status": "running",
+        "detectedAt": "2026-05-14T04:35:08.302Z"
+      }
+    ],
+    "gpu": {
+      "temperature": 65,
+      "memory": {
+        "used": 20212,
+        "total": 24576,
+        "percent": 82.24283854166666
+      },
+      "status": "ok"
+    },
+    "system": {
+      "cpuLoad": 0,
+      "ramLoad": 33.1
+    },
+    "llama": null,
+    "anomalies": [
+      {
+        "type": "info",
+        "metric": "token_rate",
+        "value": 0,
+        "threshold": 1,
+        "message": "📉 Низкая скорость генерации: 0.0 токенов/сек",
+        "timestamp": "2026-05-14T04:35:08.833Z"
+      }
+    ],
+    "anomalyCount": 1
+  },
+  {
+    "timestamp": "2026-05-14T04:36:24.132Z",
+    "processes": [
+      {
+        "name": "llama-server",
+        "pid": "6",
+        "port": 8080,
+        "status": "running",
+        "detectedAt": "2026-05-14T04:36:23.592Z"
+      }
+    ],
+    "gpu": {
+      "temperature": 58,
+      "memory": {
+        "used": 20212,
+        "total": 24576,
+        "percent": 82.24283854166666
+      },
+      "status": "ok"
+    },
+    "system": {
+      "cpuLoad": 0,
+      "ramLoad": 36.1
+    },
+    "llama": null,
+    "anomalies": [
+      {
+        "type": "info",
+        "metric": "token_rate",
+        "value": 0,
+        "threshold": 1,
+        "message": "📉 Низкая скорость генерации: 0.0 токенов/сек",
+        "timestamp": "2026-05-14T04:36:24.132Z"
+      }
+    ],
+    "anomalyCount": 1
+  }
+]

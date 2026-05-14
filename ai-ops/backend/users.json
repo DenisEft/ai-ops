@@ -1,0 +1,11 @@
+{
+  "jwtSecret": "ai-ops-secure-jwt-secret-2026",
+  "users": [
+    {
+      "username": "den",
+      "password": "$2b$10$fHc7I026bviCScMKp53cD.NemilZw98r9Zfa8rCpkUXOvu2dAhM0K",
+      "name": "Денис",
+      "role": "admin"
+    }
+  ]
+}

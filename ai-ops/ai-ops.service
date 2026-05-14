@@ -1,0 +1,20 @@
+[Unit]
+Description=AI Ops — Web Management for AI Infrastructure
+After=network.target
+
+[Service]
+Type=simple
+User=den
+WorkingDirectory=/home/den/.openclaw/workspace/ai-ops/backend
+ExecStart=/usr/bin/node src/index.js
+Environment=PORT=8081
+Environment=LLAMA_URL=http://127.0.0.1:8080
+Environment=SERVICE_NAME=llama-8080.service
+Environment=JWT_SECRET=${JWT_SECRET:-ai-ops-secure-jwt-secret-2026}
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
