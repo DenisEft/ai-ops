@@ -61,7 +61,8 @@ describe('App', () => {
 
   it('shows loading state initially', () => {
     render(<App />)
-    expect(screen.getByText('Загрузка...')).toBeInTheDocument()
+    // SkeletonFull renders animated placeholder cards (no text content)
+    expect(document.querySelector('.animate-pulse')).toBeTruthy()
   })
 
   it('renders without errors', () => {
