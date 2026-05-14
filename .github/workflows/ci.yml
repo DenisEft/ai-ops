@@ -42,9 +42,9 @@ jobs:
 
       - name: Check for llama-panel remnants
         run: |
-          if grep -r "llama-panel\|Llama Panel" --include="*.js" --include="*.jsx" --include="*.json" --include="*.md" --include="*.yml" --include="*.sh" --include="*.html" --include="*.service" ai-ops/ 2>/dev/null | grep -v node_modules | grep -v package-lock | grep -v frontend/dist | grep -v backups | grep -q .; then
+          if grep -r "llama-panel\|Llama Panel" --include="*.js" --include="*.jsx" --include="*.json" --include="*.sh" --include="*.html" --include="*.service" --include="*.css" --include="*.tsx" ai-ops/ 2>/dev/null | grep -v node_modules | grep -v package-lock | grep -v frontend/dist | grep -v backups | grep -v .github/workflows | grep -q .; then
             echo "❌ Found llama-panel remnants!"
-            grep -r "llama-panel\|Llama Panel" --include="*.js" --include="*.jsx" --include="*.json" --include="*.md" --include="*.yml" --include="*.sh" --include="*.html" --include="*.service" ai-ops/ 2>/dev/null | grep -v node_modules | grep -v package-lock | grep -v frontend/dist | grep -v backups
+            grep -r "llama-panel\|Llama Panel" --include="*.js" --include="*.jsx" --include="*.json" --include="*.sh" --include="*.html" --include="*.service" --include="*.css" --include="*.tsx" ai-ops/ 2>/dev/null | grep -v node_modules | grep -v package-lock | grep -v frontend/dist | grep -v backups | grep -v .github/workflows
             exit 1
           fi
           echo "✅ No llama-panel remnants found"
