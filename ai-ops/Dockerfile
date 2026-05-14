@@ -4,14 +4,14 @@ FROM node:22-alpine AS builder
 WORKDIR /app
 
 # Backend
-COPY backend/package.json backend/package-lock.json ./backend/
+COPY backend/package.json ./backend/
 WORKDIR /app/backend
-RUN npm ci --legacy-peer-deps || npm install --legacy-peer-deps
+RUN npm install --legacy-peer-deps
 
 # Frontend
-COPY frontend/package.json frontend/package-lock.json ./frontend/
+COPY frontend/package.json ./frontend/
 WORKDIR /app/frontend
-RUN npm ci --legacy-peer-deps || npm install --legacy-peer-deps
+RUN npm install --legacy-peer-deps
 RUN npm run build
 
 # Production stage
