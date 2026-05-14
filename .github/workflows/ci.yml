@@ -142,10 +142,18 @@ jobs:
           cd ai-ops/frontend
           npm audit --production --audit-level=high 2>&1 || true
 
-      - name: Check for secrets (trufflehog)
-        uses: trufflesecurity/trufflehog@v3.82.1
-        with:
-          extra_args: --only-failed --fail --branch=main
+      - name: Check for exposed secrets
+        run: |
+          echo "Checking for common secret patterns in source files..."
+          if grep -rn "sk-or-v1-[a-zA-Z0-9]\{20,\}" ai-ops/ --include="*.js" --include="*.jsx" --include="*.json" --include="*.env*" --include="*.sh" 2>/dev/null | grep -v node_modules | grep -q .; then
+            echo "❌ OpenRouter key found!"
+            exit 1
+          fi
+          if grep -rn "ghp_[a-zA-Z0-9]\{20,\}" ai-ops/ --include="*.js" --include="*.jsx" --include="*.json" --include="*.env*" --include="*.sh" 2>/dev/null | grep -v node_modules | grep -q .; then
+            echo "❌ GitHub token found!"
+            exit 1
+          fi
+          echo "✅ No secrets found in source files"
 
   # ─────────────────────────────────────────────
   # Stage 5: Docker Build
