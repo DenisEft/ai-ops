@@ -10,7 +10,8 @@
 set -euo pipefail
 
 PROJECT_DIR="/home/den/.openclaw/workspace/ai-ops"
-BUMP="${1:-patch}"
+ACTION="${1:-create}"
+BUMP="${2:-patch}"
 
 # ─── Helpers ─────────────────────────────────────
 log() { echo "[release] $*"; }
@@ -126,7 +127,7 @@ EOF
 }
 
 # ─── Main ────────────────────────────────────────
-case "${1:-create}" in
+case "$ACTION" in
   create)
     create_release
     ;;

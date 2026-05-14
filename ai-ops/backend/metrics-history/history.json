@@ -2602,5 +2602,47 @@
     "tokensTotal": 0,
     "llamaTps": 0,
     "llamaDecoded": 0
+  },
+  {
+    "ts": 1778746334542,
+    "timestamp": "2026-05-14T08:12:14.542Z",
+    "cpu": 1,
+    "memory": 34,
+    "gpu": 82,
+    "gpuTemp": 44,
+    "vramUsed": 20212,
+    "vramTotal": 24576,
+    "tokensPerSec": 0,
+    "tokensTotal": 0,
+    "llamaTps": null,
+    "llamaDecoded": null
+  },
+  {
+    "ts": 1778746364502,
+    "timestamp": "2026-05-14T08:12:44.502Z",
+    "cpu": 1,
+    "memory": 34,
+    "gpu": 82,
+    "gpuTemp": 39,
+    "vramUsed": 20212,
+    "vramTotal": 24576,
+    "tokensPerSec": 0,
+    "tokensTotal": 0,
+    "llamaTps": null,
+    "llamaDecoded": null
+  },
+  {
+    "ts": 1778746394495,
+    "timestamp": "2026-05-14T08:13:14.495Z",
+    "cpu": 2,
+    "memory": 34,
+    "gpu": 82,
+    "gpuTemp": 39,
+    "vramUsed": 20212,
+    "vramTotal": 24576,
+    "tokensPerSec": 0,
+    "tokensTotal": 0,
+    "llamaTps": null,
+    "llamaDecoded": null
   }
 ]
